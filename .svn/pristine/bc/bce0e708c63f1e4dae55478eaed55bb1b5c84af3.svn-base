@@ -1,0 +1,187 @@
+//window.onload=function (){};
+$(function(){
+	 // 初始化table 控件
+	 initable();
+	 var iframeObj =  window.parent.document.getElementById("pageconfig");
+	 // 初始化控件信息
+	 if($("#groupcode").val() != null 
+  		   && $("#groupcode").val() !=""
+  	       &&$("#groupcode").val() != undefined){
+		  $("#nextpaging").show();
+     }else{
+    	  $("#nextpaging").hide();
+     }
+	 
+	 // 下一步
+	   $("#nextpaging").click(function(){
+	      if($("#groupcode").val() == null 
+	    		   || $("#groupcode").val() == ""
+	    	       || $("#groupcode").val() == undefined){
+	    	  alert("未指定组编号信息！");
+	    	  return ;
+	      }
+	      $("#hidparam input").attr("disabled",false);
+	      iframeObj.src ="gatherpage.action?"+$("#hidparam").find("*").serialize();
+	      $("#hidparam input").attr("disabled",true);
+	   });
+	   /**
+	    * 添加组信息
+	    */
+	   $("#addgroup").click(function(){
+		   //校验组描述是否填写
+           var checkflag =checkgroupparam();
+	       if(!checkflag){
+		    return;
+	       }
+		   // 添加组任务
+	     
+		   if($("#addgroup").val() == "新建任务组"){
+		      //校验组描述是否已存在
+		      var checkgdesc = myTables["groupinfo"].checkColumnData("groupdesc",$("#groupdesc").val());
+		      if(checkgdesc){
+		    	  $(".Validform_right").removeClass("Validform_checktip Validform_right").addClass("Validform_checktip Validform_wrong");//checking;
+		    	  $(".Validform_wrong").html("组描述已经存在！");
+		    	  return ;
+		      }
+		      // 清空组ID
+		      $("#groupcode").val("");
+//		      alert($("#hidparam").find("*").serialize());
+	          ajaxPost("opgroup.action");
+	       }else{
+	    	   //修改组任务
+	    	   ajaxPost("modfiygroup.action");
+	    	   $("#lgurl").val($("#loginurl").val());
+	       }
+	   });
+	   // 重置信息
+	   $("#rester").click(function(){
+		  // $(':input','#hidparam').removeAttr('class');
+		   $("#addgroup").attr("value","新建任务组");
+		   $("#rester").attr("value","重置");
+		   $(".Validform_right").removeClass('Validform_right').removeClass('Validform_wrong').html(''); //有效
+		   $(".Validform_wrong").removeClass('Validform_wrong').removeClass('Validform_right').html(''); //有效
+		   $(':input','#hidparam').removeAttr('checked')  .removeAttr('selected');
+		   $("#id").val("");
+		   $("#groupdesc").val("");
+		   $("#loginurl").val("");
+		   $("#groupcode").val("");
+		   // 隐藏下一步按钮
+		   $("#nextpaging").hide();
+		   
+
+	   });
+});
+
+function initable(){
+
+	myTables.groupinfo.clickRow=function (clickval,rowdata){
+		if(clickval == "modfiygroup"){
+			 $("#addgroup").attr("value","修改组信息");
+			 $("#rester").attr("value","取消修改");
+			 // 填充修改绑定值
+			 if(rowdata.islogin == "T"){
+				$("#islogin").attr("checked",true);
+			 }else{
+				$("#islogin").attr("checked",false);
+			 }
+			 setModfiyVal(rowdata);
+		}else if(clickval == "delgroup"){
+			if(rowdata.eventcount > 0){
+				alert("存在事件配置参数，不能删除！");
+				return;
+			}
+			if($("#addgroup").val() == "修改组信息"){
+				alert("该组信息处于编辑状态不能删除！");
+				return;
+			}
+			var delurl = clickval+".action?id="+rowdata.id;
+			ajaxPost(delurl);
+		}else{
+			  // 下一步处理
+			  $("#groupcode").val(rowdata.groupcode);
+			  //选择登录事件组跳转
+			  if(rowdata.islogin == "T"){
+				  $("#lgurl").val(rowdata.loginurl);	
+			  }else{
+				  $("#lgurl").val("");	
+			  }
+		      $("#nextpaging").trigger("click");
+		}
+    };
+    myTables["groupinfo"].formatCol("islogin",function (coldata,rowdata){
+    	var isloginhtml="否";
+        var islogin = rowdata.islogin;
+        if(islogin == "T")
+        {
+        	isloginhtml="是";
+        }
+	    return isloginhtml;
+	});
+    myTables["groupinfo"].formatCol("isspider",function (coldata,rowdata){
+    	var isspiderhtml="否";
+        var isspider = rowdata.isspider;
+        if(isspider == "T")
+        {
+        	isspiderhtml="<label style='color:green;'>是</label>";
+        }
+	    return isspiderhtml;
+	});
+
+}
+
+function  setModfiyVal(obj){
+	$("#id").val(obj.id);
+	$("#groupcode").val(obj.groupcode);
+	$("#runsort").val(obj.runsort);
+	$("#groupdesc").val(obj.groupdesc);
+	$("#loginurl").val(obj.loginurl);
+	
+	//是否激活
+	if(obj.isspider == "T")
+	    $("#isspider").attr("checked",true);
+	else
+		$("#isspider").attr("checked",false);
+	
+}
+/**
+ * 校验数据是否填写
+ * @returns
+ */
+function checkgroupparam(){
+  var islogin =  $("#islogin").attr("checked");
+  // 需要登录验证 校验组名称、登录网址是否输入
+  if(islogin == "checked" && $("#addgroup").val() == "新建任务组"){
+	   var checkflag = $("#hidparam").Validform({tiptype:3});
+	   // 校验改组事件中是否存在模拟登录配置
+	   var checkglogin = myTables["groupinfo"].checkColumnData("islogin",'是');
+	   if(checkglogin){
+		   alert("该任务编号已配置模拟登录事件！");
+		   $("#rester").trigger("click");
+		   return false;
+	   }
+	   return checkflag.check();
+   }else{
+	   // 校验组名称是否填写
+      var groupdesc = $("#groupdesccheck").Validform({tiptype:3});
+	  return groupdesc.check();
+   }
+}
+
+function ajaxPost(url){
+	$.ajax({
+		url:url,
+		type:"POST",
+		data:$("#hidparam").find("*").serialize(),//$(':input,:checkbox,:radio,:select','#hidparam').serialize(),
+		success:function(res){
+	      $("#groupcode").val(res);
+	      // 释放下一步按钮
+	      $("#nextpaging").show();
+		  refershData();
+		  $("#rester").trigger("click");
+		}
+	});
+}
+	// 刷新页面
+function refershData(){
+	myTables["groupinfo"].refreshTab();
+}

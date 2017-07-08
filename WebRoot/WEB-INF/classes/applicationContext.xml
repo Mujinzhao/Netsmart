@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+           http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context-2.5.xsd
+           http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
+           http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd"  default-lazy-init="false">
+    
+    <!-- 数据源连接获取 -->
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+	   	<property name="driverClassName" value="oracle.jdbc.driver.OracleDriver"></property>
+	   	<property name="url" value="jdbc:oracle:thin:@localhost:1522:orcl"></property>
+	   	<property name="username" value="zhang"/>
+	   	<property name="password" value="123456"/>
+		<property name="maxActive" value="20" />
+        <property name="maxIdle" value="5" />
+        <property name="maxWait" value="60000" />
+   </bean>
+	<bean id="sessionFactory" class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">
+		<property name="dataSource">
+			<ref bean="dataSource" />
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<!-- org.hibernate.dialect.Oracle9Dialect 
+					datacvg.dao.dialect.Oracle9Dialect
+				-->
+				<prop key="hibernate.dialect">
+					org.hibernate.dialect.Oracle9Dialect
+				</prop>
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.format_sql">true</prop>
+			</props>
+		</property>
+	
+	</bean>
+	<bean id="hibernateInterceptor" class="org.springframework.orm.hibernate3.HibernateInterceptor">
+       <property name="sessionFactory">
+       <ref bean="sessionFactory" />
+      </property>
+   </bean>
+	<!-- 事物配置 -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+	
+	<!-- datacvg beans 解析具体配置文件 -->
+	<import resource="applicationContext-menutree.xml"/>
+	<import resource="applicationContext-plsql.xml"/>
+	<import resource="applicationContext-gather.xml"/>
+	<import resource="applicationContext-parser.xml"/>
+	<import resource="applicationContext-excel.xml"/>
+	<import resource="frams-quartz-context.xml"/>
+	
+</beans>

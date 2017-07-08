@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+
+<struts>
+	<package name="website" extends="json-default">
+	
+		<!--                           start   采集任务配置                                                               -->
+		<action name="gathergroup" class="datacvg.gather.action.GatherTaskAction"  method="gathergroup">
+			<result name="success">/gather/gathergroup.jsp</result>
+		</action> 
+		<action name="gatherpage" class="datacvg.gather.action.GatherTaskAction"  method="gatherpage">
+			<result name="groupconfig">/gather/groupconfig.jsp</result>
+			<result name="eventconfig">/gather/eventconfig.jsp</result>
+			<result name="yuansearch">/gather/yuansearch.jsp</result>
+			<result name="pageconfig">/gather/pageconfig.jsp</result>
+			<result name="pagingconfig">/gather/pagingconfig.jsp</result>
+		</action>
+		<action name="taskmanage" class="datacvg.taskmanage.action.TaskManageAction"  method="taskmanage">
+			<result name="success">/task/taskmanage.jsp</result>
+		</action> 
+		<action name="optask"      class="datacvg.gather.action.GatherTaskAction"  method="optask">
+		</action>
+		<action name="deltask"     class="datacvg.gather.action.GatherTaskAction"  method="deltask">
+		</action>
+		<action name="modfiytask"  class="datacvg.gather.action.GatherTaskAction"  method="modfiytask">
+		</action>
+		<!--                                   采集任务配置    end                          -->
+		
+		<!--                                   采集任务组信息配置    start                          -->
+		<action name="opgroup"     class="datacvg.gather.action.GatherTaskAction"  method="opgroup">
+		</action>
+		<action name="delgroup"    class="datacvg.gather.action.GatherTaskAction"  method="delgroup">
+		</action>
+		<action name="modfiygroup" class="datacvg.gather.action.GatherTaskAction"  method="modfiygroup">
+		</action>
+		<!--                                   采集任务组信息配置    end                          -->
+		
+		<!--                                   采集任务 事件配置    start                          -->
+		<action name="addevent"    class="datacvg.gather.action.GatherTaskAction"  method="addevent">
+		</action>
+		<action name="delevent"    class="datacvg.gather.action.GatherTaskAction"  method="delevent">
+		</action>
+		<action name="modifyevent" class="datacvg.gather.action.GatherTaskAction"  method="modifyevent">
+		</action>
+		<!--                                   采集任务 事件配置    end                          -->
+		
+		
+		
+		<!--                                   采集任务 页面配置    start                          -->
+		<action name="addpage"    class="datacvg.gather.action.GatherTaskAction"  method="addpage">
+		</action>
+		<action name="delpage"    class="datacvg.gather.action.GatherTaskAction"  method="delpage">
+		</action>
+		<action name="modfiypage"    class="datacvg.gather.action.GatherTaskAction"  method="modfiypage">
+		</action>
+		<!--                                   采集任务 页面配置    end                          -->
+		
+		<!--                                   采集任务 分页配置    start                          -->
+		<action name="addpaging"    class="datacvg.gather.action.GatherTaskAction"  method="addpaging">
+		</action>
+		<action name="delpaging"    class="datacvg.gather.action.GatherTaskAction"  method="delpaging">
+		</action>
+		<action name="modfiypaging"    class="datacvg.gather.action.GatherTaskAction"  method="modfiypaging">
+		</action>
+		<!--                                   采集任务 分页配置    end                          -->
+		
+		<!--                                   元搜索采集配置         start                        -->
+		<action name="savekeywords"    class="datacvg.gather.action.GatherTaskAction"  method="savekeywords">
+		</action>
+		<action name="delkeywords"    class="datacvg.gather.action.GatherTaskAction"  method="delkeywords">
+		</action>
+		<action name="updatekeywords"    class="datacvg.gather.action.GatherTaskAction"  method="updatekeywords">
+		</action>
+		
+		<!--                                   元搜索采集配置         end                          -->
+		
+		
+		<!--                                   采集任务 标签验证配置    start                          -->
+		<action name="extractingtags" class="datacvg.gather.action.GatherTaskAction"  method="extractingTags">
+		</action>
+		<action name="startspider"   class="datacvg.taskmanage.action.TaskManageAction"  method="runspiderTasks">
+		</action>
+		<action name="haltspider"    class="datacvg.taskmanage.action.TaskManageAction"  method="spiderTasksHalt">
+		</action>
+		<action name="killspider"    class="datacvg.taskmanage.action.TaskManageAction"  method="spiderTasksKill">
+		</action>
+		<action name="showlog"       class="datacvg.taskmanage.action.TaskManageAction"  method="realtimeShowLog">
+		</action>
+		<action name="timingstate"       class="datacvg.taskmanage.action.TaskManageAction"  method="savetimingState">
+		</action>
+		<!--                                   采集任务 标签验证配置    end                          -->
+		
+		<!--                                   解析任务 标签配置    Start                          -->
+		
+		
+		<action name="parserpage" class="datacvg.parse.action.ParserTaskAction"  method="parserpage">
+			<result name="beforesuffix">/parseinterface/beforesuffix.jsp</result>
+			<result name="tagparse">/parseinterface/tagparse.jsp</result>
+			<result name="tagrule">/parseinterface/tagrule.jsp</result>
+			<result name="parsergroup">/parseinterface/parsergroup.jsp</result>
+			<result name="matetag">/parseinterface/matetag.jsp</result>
+		</action> 
+		
+		<action name="parserconfig" class="datacvg.parse.action.ParserTaskAction"  method="parserconfig">
+			<result name="parsergroup">/parseinterface/parsergroup.jsp</result>
+		</action> 
+		<!--                                   解析任务  标签配置    End                          -->
+		
+		
+		
+		
+		
+		
+	    <action name="websitepage" class="datacvg.website.action.WebsiteAction"  method="websiteList">
+			<result name="success">/task/tasklist.jsp</result>
+		</action> 
+		<action name="taskgrouppage" class="datacvg.website.action.WebsiteAction"  method="taskgroupPage">
+			<result name="success">/task/taskgroup.jsp</result>
+		</action> 
+		
+		<action name="emptyfiled" class="datacvg.website.action.WebsiteAction"  method="emptyfiled">
+			<result name="success">/task/emptyfiled.jsp</result>
+		</action> 
+		
+		<!-- 网络模板 -->
+	    <action name="modifyParsertask" class="datacvg.website.action.WebsiteAction"  method="modifyParsertask">
+		</action>
+	    <action name="delParsertask" class="datacvg.website.action.WebsiteAction"  method="delParsertask">
+		</action>
+		 <action name="saveParsertask" class="datacvg.website.action.WebsiteAction"  method="saveParsertask">
+		</action>
+		 <action name="emptyfiledState" class="datacvg.website.action.WebsiteAction"  method="emptyfiledState">
+		</action>
+		 <action name="parsefiledselect" class="datacvg.website.action.WebsiteAction"  method="parsefiledSelect">
+		</action>
+		 <action name="parsetableselect" class="datacvg.website.action.WebsiteAction"  method="parseTableSelect">
+		</action>
+		
+		<action name="filecode" class="datacvg.website.action.WebsiteAction"  method="parsefiledSelect">
+		</action>
+		
+		
+		
+		 <!--                                     Start 规则前后缀操作                                                                       -->
+		 <action name="savesuffix" class="datacvg.parse.action.ParserTaskAction"    method="savesuffix">
+		 </action>
+		 <action name="delsuffix" class="datacvg.parse.action.ParserTaskAction"     method="delsuffix">
+		 </action>
+		 <action name="modifysuffix" class="datacvg.parse.action.ParserTaskAction"  method="modifysuffix">
+		 </action>
+		 <!-- 保存上传解析文件信息 -->
+		 <action name="uploadparsfile" class="datacvg.parse.action.ParserTaskAction"   method="uploadparsfile">
+		 </action>
+		 <action name="validsuffix" class="datacvg.parse.action.ParserTaskAction"   method="validsuffix">
+		 </action>
+		 
+		<action name="checkparser" class="datacvg.parse.action.ParserTaskAction"  method="checkparser">
+		</action>
+		 <!--                                     End 规则前后缀操作                                                                       -->
+		 <!--                                     Start 标签解析操作                                                                       -->
+		 <action name="tagparserinfo" class="datacvg.parse.action.ParserTaskAction"   method="tagparserinfo">
+		 </action>
+		  <action name="delparserinfo" class="datacvg.parse.action.ParserTaskAction"   method="delparserinfo">
+		 </action>
+		  <action name="updateparserinfo" class="datacvg.parse.action.ParserTaskAction"   method="updateparserinfo">
+		 </action>
+		 
+		 <action name="savetagparser" class="datacvg.parse.action.TagParserFiledAction"   method="savetagparser">
+		 </action>
+		 <action name="checktagparser" class="datacvg.parse.action.TagParserFiledAction"   method="checktagparser">
+		 </action>
+		 <action name="mateparser" class="datacvg.parse.action.TagParserFiledAction"   method="checkMateParser">
+		 </action>
+		 
+		 
+		 <action name="deltagparsser" class="datacvg.parse.action.TagParserFiledAction"   method="deltagparsser">
+		 </action>
+		 <action name="updatetagparser" class="datacvg.parse.action.TagParserFiledAction"   method="updatetagparser">
+		 </action>
+		 
+		 
+		 
+		 
+		 <!--                                     End 标签解析操作                                                                           -->
+    </package>
+
+</struts>

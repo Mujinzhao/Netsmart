@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+
+<struts>
+	<package name="menutree" extends="json-default">
+	
+		<!--                           start   功能树配置                                                              
+			<action name="menutree" class="datacvg.menu.action.TreeMenuAction"  method="menutreePage">
+		        <result name="success">/menutree/index1.jsp</result>
+		    </action> -->
+		    
+		    <action name="menutree" class="datacvg.menu.action.TreeMenuAction"  method="loadTreeInfo">
+		    </action>
+		    
+		    <action name="saveMenus" class="datacvg.menu.action.TreeMenuAction"  method="savemenuTree">
+		    </action>
+		    
+		    <action name="delMenus" class="datacvg.menu.action.TreeMenuAction"  method="delmenuTree">
+		    </action>
+		    
+		    <action name="modfiyMenus" class="datacvg.menu.action.TreeMenuAction"  method="modfiymenuTree">
+		    </action>
+		<!--                           end     功能树配置                                                               -->
+    </package>
+
+</struts>

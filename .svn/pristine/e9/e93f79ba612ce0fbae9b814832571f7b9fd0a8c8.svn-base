@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>采集平台配置信息</title>
+    <link rel="stylesheet" type="text/css" href="easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="easyui/demo/demo.css">
+<!--     <script type="text/javascript" src="easyui/jquery.min.js"></script> -->
+   
+    <script type="text/javascript" src="core/jquery-1.8.0.min.js"></script>
+    <script type="text/javascript" src="easyui/jquery.easyui.min.js"></script>
+    
+    <link rel="stylesheet" href="zTree_v3/css/demo.css" type="text/css">
+<link rel="stylesheet" href="zTree_v3/css/zTreeStyle/zTreeStyle.css"
+	type="text/css">
+<script type="text/javascript"
+	src="zTree_v3/js/jquery.ztree.core-3.5.js"></script>
+<script type="text/javascript" src="zTree_v3/js/jquery.ztree.exedit-3.5.js"></script>
+<script src="core/myutil.js"></script>
+<script src="core/index.js"></script>
+<script src="core/rightclickmenu.js"></script>
+
+<style type="text/css">
+.ztree * {
+	font-size: 12pt;
+	font-family: "Microsoft Yahei", Verdana, Simsun, "Segoe UI Web Light",
+		"Segoe UI Light", "Segoe UI Web Regular", "Segoe UI",
+		"Segoe UI Symbol", "Helvetica Neue", Arial","微软雅黑","宋体";
+}
+
+.ztree li ul {
+	margin: 0;
+	padding: 0
+}
+
+.ztree li {
+	line-height: 30px;
+}
+
+.ztree li a {
+	width: 200px;
+	height: 30px;
+	padding-top: 0px;
+}
+
+.ztree li a:hover {
+	text-decoration: none;
+	background-color: #f4f7f9;
+}
+
+.ztree li a span.button.switch {
+	visibility: hidden
+}
+
+.ztree.showIcon li a span.button.switch {
+	visibility: visible
+}
+
+.ztree li a.curSelectedNode {
+	/* background-color: #D4D4D4; */
+	background-color: transparent;
+	border: 0;
+	height: 30px;
+}
+
+.ztree li span {
+	line-height: 30px;
+	color: #2b3238;
+}
+
+.ztree li span.button {
+	margin-top: -7px;
+}
+
+.ztree li span.button.switch {
+	width: 16px;
+	height: 16px;
+}
+
+.ztree li a.level0 span {
+	font-size: 150%;
+	font-weight: bold;
+}
+
+.ztree li span.button {
+	background-image: url("./left_menuForOutLook.png");
+	*background-image: url("./left_menuForOutLook.gif")
+}
+
+.ztree li span.button.switch.level0 {
+	width: 20px;
+	height: 20px
+}
+
+.ztree li span.button.switch.level1 {
+	width: 20px;
+	height: 20px
+}
+
+.ztree li span.button.noline_open {
+	background-position: 0 0;
+}
+
+.ztree li span.button.noline_close {
+	background-position: -18px 0;
+}
+
+.ztree li span.button.noline_open.level0 {
+	background-position: 0 -18px;
+}
+
+.ztree li span.button.noline_close.level0 {
+	background-position: -18px -18px;
+}
+div#rMenu {
+/* position:absolute; visibility:hidden; 
+top:0; background-color: #eee;text-align: left;padding: 2px; */
+padding-top:4px;
+cursor:default;
+font:menutext;
+position:absolute;
+text-align:left;
+font-family: "宋体";
+font-size: 10pt;
+width:100px; /*宽度，可以根据实际的菜单项目名称的长度进行适当地调整*/
+background-color:menu; /*菜单的背景颜色方案，这里选择了系统默认的菜单颜色*/
+border:1 solid buttonface;
+visibility:hidden; /*初始时，设置为不可见*/
+border:2 outset buttonhighlight;
+}
+div#rMenu div{
+	margin: 1px 0;
+	padding: 0 5px;
+	cursor: pointer;
+	list-style: none outside none;
+	/* background-color: #DFDFDF; */
+	background-color: #eee;
+}
+</style>
+</head>
+<body>
+    <div class="easyui-layout" style="width:100%;height:600px; repeat-x;">
+       <div id="p" data-options="region:'west'" title="导航" style="width:20%;padding:10px;overflow-x:hidden;background-color: transparent;">
+            <div class="zTreeDemoBackground left">
+			    <ul id="treeDemo" class="ztree"></ul>
+			</div>
+        </div>
+	  <div  id="tt" class="easyui-tabs"  data-options="region:'center'">
+			<div title="Home">
+			</div>
+		</div>
+    </div>
+	<div id="rMenu" style="width:150px;overflow-x:hidden;background-color: transparent;">
+	<!-- 	<ul>
+			<li id="m_add" onclick="addTreeNode();">添加模板信息</li>
+			<li id="m_del" onclick="removeTreeNode();">删除模板</li>
+			<li id="m_modfiy">修改模板</li>
+	    </ul> -->
+	     <div class="menu-sep"></div>
+	     <div id="m_add" >添加模板</div> 
+	     <div id="m_del">删除模板</div>  
+         <div id="m_modfiy">修改模板</div> 
+         <div class="menu-sep"></div>  
+	</div>
+    <div id="menu" class="easyui-menu" style="width:150px;">  
+        <!-- <div id="menu-refresh">刷新</div> -->
+	    <div class="menu-sep"></div>
+        <div id="menu-tabclose">关闭</div>  
+        <div id="menu-tabcloseall">关闭全部</div>  
+        <div id="menu-tabcloseother">关闭其他</div>
+        <div class="menu-sep"></div>  
+        <div id="menu-tabcloseright">关闭右侧标签</div>  
+        <div id="menu-tabcloseleft">关闭左侧标签</div>  
+    </div>  
+</body>
+</html>

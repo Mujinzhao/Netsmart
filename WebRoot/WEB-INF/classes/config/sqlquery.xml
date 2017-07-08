@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqlfile>
+	<!-- START 参数相关 -->
+   <!--    where (t.template_restype=:searchflag OR t.template_restype=:searchflag1) -->
+	<sql key="queryOrgTree">
+	<![CDATA[
+	   select * from parser_template_res t where t.TEMPLATE_RESROOTID  in (
+	         select distinct t.TEMPLATE_RESPARENTID from parser_template_res t
+        ) order by t.createtime desc
+		]]>
+	</sql>
+	
+	<sql key="queryResTree">
+	<![CDATA[
+         select * from resource_res t where t.res_rootid  in (
+                   select distinct t.res_id from resource_res t
+         ) order by t.create_time desc
+        
+		]]>
+	</sql>
+	<sql key="getFileList">
+		<![CDATA[
+			  select 
+			      s.excel_id,
+			      l.file_pkid,l.file_fname,l.file_size,l.file_type,
+			      l.file_path,l.upload_username,l.file_description,
+			      to_char(l.create_time,'yyyy-MM-dd') as create_time,
+			      to_char(l.update_time,'yyyy-MM-dd') as update_time,
+	              (
+	                 select count (s.file_pkid) from parser_structure_sheet_info s ,parser_structure st
+	                 where s.file_pkid = st.fileid  and l.file_fname = s.excel_name
+	               )as structurenum,
+	               s.PARSERNUM,
+                   s.excel_stauts as strutate
+			from  parser_file_list l,parser_structure_sheet_info s
+            where l.file_fname = s.excel_name
+			and #l.file_fname like '%:filename%'# 
+			and #l.file_type=:filetype#
+			order by   l.create_time desc
+		]]>
+	</sql>
+		<sql key="getParserList">
+		<![CDATA[
+			  select 
+		             s.file_pkid,s.template_id,
+		             s.file_fname,s.file_type,
+		             s.file_size,s.file_path,
+		             s.parserstatus,
+		             s.parsernum,
+		             s.status,s.create_time
+		      from   parser_file_list s
+		      where  #s.template_id=:templateid#
+		      and    #s.file_fname like '%:filename%'#
+		      and    #s.file_type like '%:filetype%'#
+			         order by s.create_time desc
+		]]>
+	</sql>
+    <sql key="getTemplateList">
+		<![CDATA[
+			select   p.template_id,p.template_type,p.template_name,template_filetype,p.template_size,
+			         p.template_path, to_char(p.create_time,'yyyy-MM-dd') as create_time,
+			          (select  count (s1.id) from  parser_structure s1 where s1.templateid=p.template_id) AS structernum,
+			          (select  count (p1.file_pkid) from  parser_file_list p1 where p1.template_id =p.template_id) AS filetotalnum,
+			          (select  count (p1.file_pkid) from  parser_file_list p1 where p1.template_id=p.template_id and p1.parserstatus='T') AS fileparsnum
+			from     PARSER_TEMPLATE p
+			where #p.template_fname like '%:templatename%'# 
+			and   #p.template_type like '%:templatetype%'#
+			order by   p.create_time desc
+		]]>
+	</sql>
+	<sql key="getHaiertableInfo">
+		<![CDATA[
+		    select table_name ,comments as commdesc ,owner
+		    from all_tab_comments 
+		    where table_name like ':likeflag%' and table_type ='TABLE'
+		]]>
+	</sql>
+	
+	
+	<sql key="getHaierStructure">
+		<![CDATA[
+		    select 
+		        ID,
+				TEMPLATEID,
+				SHEETNAME,
+				TABLENAME,
+				DBTABLENAME,
+				PARSEINTERFACE,
+				PARSESROWNUM,
+				PARSEEROWNUM,
+				PARSESCELLNUM,
+				PARSEECELLNUM,
+				PARSEFLAG,
+				PARSEFILED,
+				PARSEBRANDNAME,
+				TABLEUNIT,
+				CREATETIME,
+				UPDATETIME,
+				PARSERSCOPE,
+				PARSERESCOPE,
+				PARSERSTAUTS
+				
+		     from 
+		         parser_structure s where #s.TEMPLATEID=:pkid#
+		         order by s.sheetname desc , s.createtime asc
+		]]>
+	</sql>
+
+	
+	
+	<sql key="getStructure">
+		<![CDATA[
+		    select 
+		        ID,
+				TEMPLATEID,
+				SHEETNAME,
+				TABLENAME,
+				DBTABLENAME,
+				PARSEINTERFACE,
+				PARSESROWNUM,
+				PARSEEROWNUM,
+				PARSESCELLNUM,
+				PARSEECELLNUM,
+				PARSEFLAG,
+				PARSECONTENT,
+				PARSEFILED,
+				PARSEBRANDNAME,
+				TABLEUNIT,
+				PARSERSCOPE,
+				PARSERESCOPE,
+				PARSERSTAUTS
+		     from 
+		         parser_structure where TEMPLATEID=:id
+		         and (PARSEFLAG='F' OR PARSEFLAG is null)
+		]]>
+	</sql>
+	<sql key="getStructureAll">
+		<![CDATA[
+		    select 
+		        ID,
+				TEMPLATEID,
+				SHEETNAME,
+				TABLENAME,
+				DBTABLENAME,
+				PARSEINTERFACE,
+				PARSESROWNUM,
+				PARSEEROWNUM,
+				PARSESCELLNUM,
+				PARSEECELLNUM,
+				PARSEFLAG,
+				PARSECONTENT,
+				PARSEFILED,
+				PARSEBRANDNAME,
+				TABLEUNIT,
+				PARSERSCOPE,
+				PARSERESCOPE,
+				PARSERSTAUTS
+		     from 
+		         parser_structure s  order by s.sheetname desc , s.createtime asc
+		]]>
+	</sql>
+	<!-- w.maxpageregex,w.nextpagerule, w.outregex,w.urlregex, -->
+	<sql key="getwebsiteInfo">
+		<![CDATA[
+		    select
+			    w.website_id,
+	            w.domainame,w.loginwebsite,w.spiderurlmain,w.posturl,w.posturl1,w.urlencoding,w.usernametag,
+	            w.passwordtag,w.eventvalidationtag,w.viewstateq,w.loginothertag,w.loginodefulatpam,w.loginodefulatpam1,
+	            w.mothvalue,w.startimetag,w.endtimetag,w.paramothertag,w.searchwords,
+	            w.maxpageregex,w.nextpagerule, w.outregex,w.urlregex,
+	            w.maxpagenum,w.tabletag,w.rowtag,w.celltag,w.creatime,w.updatetime,w.taskstate,w.loginflag,
+			    replace(w.maxpageregex,'"','''') as contentregex,
+				replace(w.nextpagerule,'"','''') as nextregex,
+				replace(w.outregex,'"','''') as outregexsingle,
+				replace(w.urlregex,'"','''') as urlregexsingle
+		     from 
+		         parser_websit_info w  order by w.creatime asc
+		]]>
+	</sql>
+	
+
+	<sql key="inserPaserCusField">
+		<![CDATA[
+		       insert into 
+		                 spider_parse_cusfield
+		        values(
+				         :id,
+				         :taskcode,
+				         :indcode,
+				         :structuredid,
+				         :morestruts,
+				         :asstable,
+				         :asstablename,
+				         :acqfield,
+				         :acqfieldesc,
+				         '',
+				         :parsertype,
+				         sysdate,
+				         '',
+				         'false',
+				         :taskname,
+				         :parsercode,
+				         :owner
+	
+		       )
+		]]>
+	</sql>
+	
+	
+    <!-- 生成sql文件 -->
+	<sql key="tablepath">
+		<![CDATA[
+		    D:\\db\\integrate\\
+		]]>
+	</sql>
+	
+	<!-- 执行产生的日志 -->
+	<sql key="logpath">
+		<![CDATA[
+		     D:\\db\\log\\
+		]]>
+	</sql>
+</sqlfile>

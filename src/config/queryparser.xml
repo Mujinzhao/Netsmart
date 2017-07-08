@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqlfile>
+    <!-- 生成sql文件 -->
+    	<!-- 结构配置 -->
+    <sql key="getparserInfo" describe="根据任务ID 获取解析任务信息">
+		<![CDATA[
+	       select
+                  distinct c.taskcode,c.structuredesc,c.parsertype,c.structuredid,
+                           c.morestructured,c.celltorow,c.asstable,c.asstablename,c.parserfilecode,c.owner,
+                           ts.taskname,ts.taskurl,ts.encodeurl
+           from 
+                spider_parse_cusfield c ,gather_parser_task ts where c.taskcode = ts.taskcode and #ts.taskcode=:taskid#
+		]]>
+	</sql>
+	 <sql key="getEmptFiled" describe="设置解析任务中的非空字段信息">
+		<![CDATA[
+		    select c.* from spider_parse_cusfield c,all_tab_columns t 
+	        where t.table_name = c.asstable and t.column_name = c.acqfield 
+	        and #c.structuredid=:structuredid# and #c.asstable=:asstable#
+	        and #t.owner=:owner#   order by t.COLUMN_ID asc
+		]]>
+	</sql>
+	
+		<sql key="getTableFiledInfo" ahthor="sxy" date="2012-09-04"
+		describe="数据库表字段">
+		<![CDATA[
+		  select t.column_name from all_tab_columns t where t.table_name=upper(:asstable) order by t.COLUMN_ID asc
+		]]>
+	</sql>
+	<!-- 
+	  select t.column_name,t1.comments from all_tab_columns t
+                   left join user_col_comments t1 on t1.table_name = t.table_name and t.column_name = t1.column_name
+                where t.table_name=upper(:asstable) order by t.COLUMN_ID asc
+                 select s.column_name,s.comments from dba_tables db,all_col_comments s 
+              where  db.owner=:owner
+              and    s.owner=:owner
+              and    db.table_name =s.table_name 
+              and    db.table_name=:asstable
+    -->
+	<sql key="getTableFiled" ahthor="sxy" date="2012-09-04"
+		describe="字段存储数信息">
+		<![CDATA[
+             select c.column_name,(case when t.comments is null then c.COLUMN_NAME else T.COMMENTS  end) as comments from all_tab_columns c,all_col_comments t
+	         where  t.table_name = c.TABLE_NAME  and t.column_name = c.COLUMN_NAME
+	         and t.owner= c.OWNER
+             and c.TABLE_NAME=:asstable 
+             and c.OWNER=:owner
+	         order by c.COLUMN_ID  asc
+        ]]>
+	</sql>
+	
+	<sql key="getTableFiledByStructuredid" ahthor="sxy" date="2012-09-04"
+		describe="字段存储数信息——描述">
+		<![CDATA[
+	        select c.acqfield,c.acqfieldesc from spider_parse_cusfield c,all_tab_columns t 
+	        where  t.table_name = c.asstable 
+	        and t.column_name = c.acqfield 
+	        and c.asstable=:asstable 
+	        and c.structuredid=:structuredid
+	        and t.owner=:owner 
+	        order by t.column_id asc
+        ]]>
+	</sql>
+	
+	<sql key="updatemptyAcqfield" ahthor="sxy" date="2012-09-04"
+		describe="修改非空字段信息">
+		<![CDATA[
+	       update spider_parse_cusfield c 
+        ]]>
+	</sql>
+	
+	<sql key="getParserFilecode" ahthor="sxy" date="2012-09-04"
+		describe="解析任务对应文件编号信息">
+		<![CDATA[
+	           select 
+	                 c.parsercode,c.parsercode
+               from gather_parser_code c
+               where  c.taskcode=:taskcode
+        ]]>
+	</sql>
+	<!-- 数据库用户信息 -->
+	<sql key="getDbausers" ahthor="sxy" date="2015-03-18"
+		       describe="查看当前数据库所有用户信息">
+		<![CDATA[
+	         select  db.username,db.username 
+	         from  dba_users db 
+	         where    db.account_status='OPEN' 
+	         order by db.created desc 
+ 
+        ]]>
+	</sql>
+	<!--  and   s.table_name LIKE 'FDC_%' -->
+	<sql key="getPaserSaveTable" ahthor="sxy" date="2015-03-18"
+		       describe="根据当前用户获取表信息">
+		<![CDATA[
+          select s.table_name,
+          (case when s.comments is null then s.table_name else s.comments  end) as commdesc,s.owner 
+					from  all_tab_comments s,all_tables t1 
+          where s.owner= t1.owner
+          AND   t1.TABLE_NAME= s.TABLE_NAME 
+          and   s.table_type ='TABLE'
+          and   s.owner=:owner
+        ]]>
+	</sql>
+	
+	<!-- 数据库用户信息 -->
+	<sql key="getDbausertablespace" ahthor="sxy" date="2015-03-18"
+		       describe="查看当前数据库所有表空间信息">
+		<![CDATA[
+	         select  distinct db.default_tablespace,db.default_tablespace 
+	         from  dba_users db 
+	         where    db.account_status='OPEN' 
+	         order by db.default_tablespace asc
+ 
+        ]]>
+	</sql>
+	
+	
+	
+	
+	<!--   where #t.taskcode=:taskcode# and #t.datatable=:asstable# 
+	
+	 select 
+	               t.id,t.taskcode,t.structuredcode,t.datatable,t.acqfield,
+	               t.ruleprefix,t.rulesuffix,t.excludregex,t.extractregex,
+	               t.fieldindex,t.tagruleid, c.comments,
+	               replace(t.ruleprefix,'"','''') as prefixrule,
+				   replace(t.rulesuffix,'"','''') as suffixrule,
+				   replace(t.excludregex,'"','''') as outregex,
+				   replace(t.extractregex,'"','''') as exregex
+	         from spider_parse_rule t ,all_col_comments c, all_tab_columns s
+	          where c.table_name=t.datatable
+              and   c.column_name=t.acqfield
+              and   t.datatable = s.table_name
+              and   t.acqfield = s.column_name
+	          and  #t.structuredcode=:structuredid# and #t.datatable=:asstable#
+              and  #t.tagruleid=:parsetype#
+              order by s.COLUMN_ID  asc
+	-->
+	<sql key="getParserBeforesuffix" ahthor="sxy" date="2012-09-04"
+		describe="规则前后缀解析">
+		<![CDATA[
+				select 
+				           t.id,t.taskcode,t.structuredcode,t.datatable,t.acqfield,
+				           t.ruleprefix,t.rulesuffix,t.excludregex,t.extractregex,
+				           t.fieldindex,t.tagruleid, c.acqfieldesc,
+				           replace(t.ruleprefix,'"','''') as prefixrule,
+				           replace(t.rulesuffix,'"','''') as suffixrule,
+				           replace(t.excludregex,'"','''') as outregex,
+				           replace(t.extractregex,'"','''') as exregex
+				from  spider_parse_rule t,
+				      spider_parse_cusfield c,
+				      all_tab_columns s
+				      
+				where t.acqfield  = c.acqfield
+				and   t.datatable = c.asstable
+				and   t.datatable = s.TABLE_NAME
+				and   t.acqfield  = s.COLUMN_NAME
+				and   #t.structuredcode=:structuredid#
+				and   #c.structuredid=:structuredid#
+				and   #t.datatable=:asstable#
+				and   #t.tagruleid=:parsetype#
+				order by s.COLUMN_ID asc
+              
+	       
+        ]]>
+	</sql>
+	<!--   select s.*,t.comments from spider_parse_rule s,all_col_comments t 
+          where t.table_name = s.datatable and t.column_name = s.acqfield 
+          and #s.structuredcode=:structuredid# and #s.datatable=:asstable#
+          and #s.tagruleid=:parsetype#
+          order by s.fieldindex asc  -->
+	<sql key="getParserTagParse" ahthor="sxy" date="2012-09-04"
+		describe="标签字段">
+		<![CDATA[
+            select r.*,t.acqfieldesc from spider_parse_cusfield t,spider_parse_rule r
+			where t.asstable = r.datatable 
+			and  t.acqfield = r.acqfield
+			and t.structuredid = r.structuredcode
+			and #t.structuredid=:structuredid#
+			and r.fieldindex is not null
+			order by  to_number(r.fieldindex) asc
+	         
+        ]]>
+	</sql>
+	<sql key="getTagRuleParse" ahthor="sxy" date="2012-09-04"
+		describe="标签规则解析">
+		<![CDATA[
+	      select t.* from spider_parse_tagrule t
+	       where #t.structuredcode=:structuredid#
+	       and #t.taskcode=:taskcode#
+           and #t.tagruleid=:parsetype#
+           order by t.partagcode asc
+        ]]>
+	</sql>
+	<sql key="gather_root_dir" ahthor="sxy" date="2012-09-04"
+		describe="任务解析路径">
+		<![CDATA[
+		   .\\gather\\
+        ]]>
+	</sql>
+	<sql key="getLastTimeFileDir" ahthor="sxy" date="2012-09-04"
+		describe="采集解析任务日志大小">
+		<![CDATA[
+		    .\\readloglasttime.properties
+        ]]>
+	</sql>
+	
+	<sql key="myDBPath" ahthor="sxy" date="2012-09-04"
+		describe="嵌入式数据库">
+		<![CDATA[
+		    .\\embeddeddb
+        ]]>
+	</sql>
+</sqlfile>

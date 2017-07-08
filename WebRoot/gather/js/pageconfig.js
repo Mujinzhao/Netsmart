@@ -1,0 +1,169 @@
+//window.onload=function (){};
+/**
+ * 页面操作js
+ */
+$(function(){
+	   //初始化表格控件
+	   initable();
+	   var iframeObj =  window.parent.document.getElementById("pageconfig");
+	   if($("#flag").val() == "event"){
+		   $("#previousstep").show();
+		   // 上一步
+		   $("#previousstep").click(function(){
+			   $("#pageflag").val("3");
+			   iframeObj.src ="gatherpage.action?"+$("#hidparam").find("*").serialize();
+		   });
+	   }else{
+		   $("#previousstep").hide();
+	   }
+		   // 下一步
+		   $("#nextpaging").click(function(){
+			   $("#pageflag").val("4");
+			   iframeObj.src ="gatherpage.action?"+$("#hidparam").find("*").serialize();
+		   });
+		   //检测
+		   $("#extractingtags").click(function(){
+			   ajaxPost("extractingtags.action");
+		   });
+		   $("#savepageconfig").click(function(){
+			   // 释放置灰按钮
+			   $("#partagcode").attr("disabled",false);
+			   $("#tagcode").attr("disabled",false);
+			   var url="";
+			   if($("#savepageconfig").val()=="保存"){
+				   settagcode();
+				   url="addpage.action";
+				
+			   }else{
+				   url="modfiypage.action";
+			   }
+			   ajaxPost(url);
+			   // 置灰按钮
+			   $("#partagcode").attr("disabled",true);
+			   $("#tagcode").attr("disabled",true);
+			   //alert($(':input,:checkbox,:radio','#addpageparam').serialize());
+		   });
+		   
+		   
+		   $("#clearcontor").click(function(){
+			   $("#savepageconfig").attr("value","保存");
+			   $("#clearcontor").attr("value","重置");
+			   // 清空标签信息值
+			   $(':input,:checkbox,:radio','#addpageparam').val('').removeAttr('checked')  .removeAttr('selected'); 
+		   });
+	   
+});
+function  initable(){
+	myTables.itertaginfo.clickRow=function (clickval,rowdata){
+		if(clickval == "modfiypage"){
+			 $("#savepageconfig").attr("value","确认修改");
+			 $("#clearcontor").attr("value","取消修改");
+			 setModifyVal(rowdata);
+		}else if(clickval == "delpage"){
+			var delurl = clickval+".action?id="+rowdata.id;
+			ajaxPost(delurl);
+		}
+    };
+    
+    myTables["itertaginfo"].formatCol("isgather",function (coldata,rowdata){
+    	var isgatherhtml=null;
+        var isgather = rowdata.isgather;
+        if(isgather == "T") {
+        	isgatherhtml="<label style='color:green;'>是</label>";
+	    } else{
+	    	isgatherhtml="否";
+	    }
+	    return isgatherhtml;
+	});
+	
+    myTables["itertaginfo"].formatCol("isdrill",function (coldata,rowdata){
+    	var isdrillhtml=null;
+        var isdrill = rowdata.isdrill;
+        if(isdrill == "T")
+        {
+        	isdrillhtml="<label style='color:green;'>是</label>";
+        }else{
+        	isdrillhtml="否";
+        }
+	    return isdrillhtml;
+	});
+	
+	myTables["itertaginfo"].formatCol("tagtype",function (coldata,rowdata){
+		var tagtypehtml = "";
+        var tagtype = rowdata.tagtype;
+        if(tagtype == "0")
+        {
+        	tagtypehtml="目标标签";
+        }
+        if(tagtype == "1")
+        {
+        	tagtypehtml="容器标签";
+        }
+	    return tagtypehtml;
+	});
+}
+function  setModifyVal(obj){
+	$("#id").val(obj.id);
+	$("#tagtype").attr("value",obj.tagtype);
+	$("#partagcode").val(obj.partagcode);
+	$("#tagcode").val(obj.tagcode);
+	$("#tagname").attr("value",obj.tagname);
+	$("#tagattr").attr("value",obj.tagattr);
+	$("#tagval").attr("value",obj.tagattrval);
+	$("#targetval").attr("value",obj.targetattr);
+	
+	//是否采集
+	if(obj.isgather == "T")
+	    $("#isspider").attr("checked",true);
+	else
+		$("#isspider").attr("checked",false);
+	
+	//是否钻取
+	if(obj.isdrill == "T")
+	    $("#isdrill").attr("checked",true);
+	else
+		$("#isdrill").attr("checked",false);
+	
+}
+// 设置父级标签及标签编号
+function settagcode(){
+	   var req = /共.*?(\d+).*?行/;
+	   var countnum=1;
+	   var countnumstr = $(".pagingdiv").text();
+	   if(countnumstr != "" && countnumstr!= null &&countnumstr !=undefined){
+		   var result= countnumstr.match(req); 
+		   if(result !="null"){
+			   countnum= result[1];
+			   countnum++;
+		   }
+	   }
+	   $("#partagcode").val(countnum-1);
+	   $("#tagcode").val(countnum); 
+}
+
+function link_open(){
+	window.open($("#taskurl").text());
+	//window.parent.parent.addTab($("#taskname").val(), "gcf:view-source:"+$("#taskurl").val());
+}
+// 标签类型修改触发事件
+function changetagtype(value){
+	if(value == "0"){
+		$("#pagecontor").show();
+	}else{
+		$("#pagecontor").hide();
+	}
+}
+function ajaxPost(url){
+	$.ajax({
+		url:url,
+		type:"POST",
+		data:$("#addpageparam").find("*").serialize(),
+		success:function(res){
+		  refershData();
+		}
+	});
+}
+	// 刷新页面
+function refershData(){
+	myTables["itertaginfo"].refreshTab();
+}

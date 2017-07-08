@@ -1,0 +1,918 @@
+package datacvg.parse.service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.log4j.Logger;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+
+import core.dbcontrol.BaseDao;
+import core.dbcontrol.MySessionFactory;
+import core.spider.entity.RuleTemplate;
+import core.spider.entity.StaticVar;
+import core.spider.entity.TagBean;
+import core.spider.entity.TagruleTemplate;
+import core.util.RegexValidate;
+import core.util.WDWUtil;
+import datacvg.parse.entity.ParserInfo;
+
+public class ParseroperateTask
+{
+	private static final Logger parser = Logger.getLogger(ParseroperateTask.class);
+	private static final Logger excel = Logger.getLogger(ParseroperateTask.class);
+	public BaseDao dao = null;
+	private MySessionFactory mySessionFactory;
+
+	public MySessionFactory getMySessionFactory()
+	{
+		return mySessionFactory;
+	}
+
+	public void setMySessionFactory(MySessionFactory mySessionFactory)
+	{
+		this.mySessionFactory = mySessionFactory;
+	}
+
+	public BaseDao getDao()
+	{
+		return dao;
+	}
+
+	public void setDao(BaseDao dao)
+	{
+		this.dao = dao;
+	}
+
+	public ParseroperateTask()
+	{
+	};
+
+	/****************************************** 解析任务操作类 *****************************************/
+
+	/**
+	 * 获取解析任务信息
+	 * 
+	 * @param sql
+	 */
+	public void getParserInfo(String sql)
+	{
+		try
+		{
+			sql = "select distinct c.taskcode,c.structuredid,c.parsertype,c.morestructured,c.asstable,ts.encodeurl from spider_parse_cusfield c ,gather_parser_task ts where c.taskcode = ts.taskcode and ts.isactive='T'";
+			List<?> parserlist = (List<?>) dao.selectSqlAuto(sql);
+			if (null != parserlist && parserlist.size() > 0)
+			{
+				for (int i = 0; i < parserlist.size(); i++)
+				{
+					Object[] obj = (Object[]) parserlist.get(i);
+					ParserInfo parserinfo = new ParserInfo();
+					// 任务编号
+					String taskCode = String.valueOf(obj[0] == null ? "" : obj[0]);
+					parserinfo.setTaskcode(taskCode);
+					// 多结构编号
+					String structuredCode = String.valueOf(obj[1] == null ? "" : obj[1]);
+					parserinfo.setMorestructured(structuredCode);
+					// 解析类型
+					parserinfo.setParsertype(String.valueOf(obj[2] == null ? "" : obj[2]));
+					// 保存表
+					parserinfo.setSavetable(String.valueOf(obj[4] == null ? "" : obj[4]));
+					// 网站编码
+					parserinfo.setEncodetype(String.valueOf(obj[5] == null ? "" : obj[5]));
+					StaticVar.parserlist.add(parserinfo);
+					// StaticVar.parserState.put(structuredCode, parserList);
+				}
+
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			parser.error("任务非空字段信息获取失败!");
+		}
+	}
+
+	/**
+	 * 获取解析任务信息
+	 * 
+	 * @param sql
+	 */
+	public List<ParserInfo> getParserInfo(String sql, String taskcode)
+	{
+		try
+		{
+			sql = "select distinct c.taskcode,c.structuredid,c.parsertype,c.morestructured,c.asstable,ts.encodeurl,c.celltorow,c.parserfilecode,c.owner"
+					+ ",ts.remark from spider_parse_cusfield c ,gather_parser_task ts "
+					+ "where c.taskcode = ts.taskcode and ts.taskcode='"
+					+ taskcode + "' and ts.isactive='T'";
+			@SuppressWarnings("rawtypes")
+			List parserlist = (List) dao.selectSqlAuto(sql);
+			if (null != parserlist && parserlist.size() > 0)
+			{
+				for (int i = 0; i < parserlist.size(); i++)
+				{
+					Object[] obj = (Object[]) parserlist.get(i);
+					ParserInfo parserinfo = new ParserInfo();
+					// 任务编号
+					String taskCode = String.valueOf(obj[0] == null ? "" : obj[0]);
+					parserinfo.setTaskcode(taskCode);
+					// 多结构编号
+					String structuredCode = String.valueOf(obj[1] == null ? "" : obj[1]);
+					parserinfo.setStructuredid(structuredCode);
+					// 解析类型
+					parserinfo.setParsertype(String.valueOf(obj[2] == null ? "" : obj[2]));
+					// 保存表
+					parserinfo.setSavetable(String.valueOf(obj[4] == null ? "" : obj[4]));
+					// 网站编码
+					parserinfo.setEncodetype(String.valueOf(obj[5] == null ? "" : obj[5]));
+					// 列转行存储
+					parserinfo.setRowtocell(String.valueOf(obj[6] == null ? "" : obj[6]));
+					// 解析对应文件编号
+					parserinfo.setParserfilecode(String.valueOf(obj[7] == null ? "" : obj[7]));
+					// 解析存储对应数据库用户
+					parserinfo.setOwner(String.valueOf(obj[8] == null ? "" : obj[8]));
+					StaticVar.parserlist.add(parserinfo);
+					// 存储任务是否过滤URL排重 taske编号，状态 T表示需要 F表示不需要
+					StaticVar.taskheavy.put(taskCode, String.valueOf(obj[9] == null ? "" : obj[9]));
+					// StaticVar.parserState.put(structuredCode, parserList);
+				}
+//				parser.info("获取 " + taskcode + "任务下的解析模板个数为:" + parserlist.size());
+				return StaticVar.parserlist;
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			parser.error("任务非空字段信息获取失败!");
+		}
+		return null;
+	}
+
+	/**
+	 * 获取字段
+	 * 
+	 * @param sql
+	 */
+	public void getCusfiled(String sql)
+	{
+		HashMap<String, List<String>> struct = null;
+		List<String> fieldList = null;
+		List<?> fieldlist = null;
+		if(!StaticVar.notNullField.isEmpty()){
+			return;
+		}
+		try
+		{
+			sql = "select t.taskcode,t.structuredid,t.morestructured,t.asstable,t.asstablename,t.acqfield,t.acqfieldesc,t.emptyacqfield from spider_parse_cusfield t";
+			fieldlist = dao.selectSqlAuto(sql);
+			if (null != fieldlist && fieldlist.size() > 0)
+			{
+				for (int i = 0; i < fieldlist.size(); i++)
+				{
+					Object[] obj = (Object[]) fieldlist.get(i);
+					// 任务编号
+					String taskCode = String.valueOf(obj[0] == null ? "" : obj[0]);
+					// 多结构编号
+					String structuredCode = String.valueOf(obj[1] == null ? "" : obj[1]);
+					// 表字段
+					String acqfiled = String.valueOf(obj[5] == null ? "" : obj[5]);
+					// 是否为空
+					String isNull = String.valueOf(obj[7] == null ? "" : obj[7]);
+					// 表示该任务指定过非空字段
+					if (isNull != null && isNull.equals("1"))
+					{
+						struct = StaticVar.notNullField.get(taskCode);
+						if (struct == null)
+						{
+							struct = new HashMap<String, List<String>>();
+							fieldList = new ArrayList<String>();
+						}
+						else
+						{
+							fieldList = struct.get(structuredCode);
+							if (fieldList == null)
+							{
+								fieldList = new ArrayList<String>();
+							}
+						}
+						fieldList.add(acqfiled);
+						struct.put(structuredCode, fieldList);
+						StaticVar.notNullField.put(taskCode, struct);
+					}
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			parser.error("任务非空字段信息获取失败!");
+		}
+	}
+
+	/**
+	 * 解析模板（前后缀）
+	 * 
+	 * @param sql
+	 */
+	public void getSuffixrule(String sql)
+	{
+		sql = "SELECT ACQFIELD,RULEPREFIX,RULESUFFIX,EXCLUDREGEX,DATATABLE,TASKCODE,STRUCTUREDCODE,FIELDINDEX,TAGRULEID,EXTRACTREGEX FROM SPIDER_PARSE_RULE";
+		// 实例化全局规则MAP集合
+		StaticVar.ruleMap = new HashMap<String, HashMap<String, List<RuleTemplate>>>();
+		List<?> rulelist = null;
+		try
+		{
+			rulelist = dao.selectSqlAuto(sql);
+			if (null != rulelist && rulelist.size() > 0)
+			{
+				for (int i = 0; i < rulelist.size(); i++)
+				{
+					Object[] obj = (Object[]) rulelist.get(i);
+					// 解析方法 0 标识前后缀 1标识标签解析 2 标识综合解析 4 元搜索解析
+					String tagruleId = String.valueOf(obj[8] == null ? "" : obj[8]);
+					// 字段下标
+					String fieldIndex = String.valueOf(obj[7] == null ? "" : obj[7]);
+					// 区分是前后缀解析方式、还是标签解析方式、 元搜索解析
+					if (tagruleId.trim().equals("4") && (fieldIndex == null || fieldIndex.equals("")))
+					{
+						// 前后缀解析方式
+						addRuleTemplate(obj, StaticVar.ruleMap);
+						// 配置标签解析方式
+						addRuleTemplate(obj, StaticVar.relateMap);
+					}
+					if (tagruleId.trim().equals("0") || (tagruleId.trim().equals("2") && (fieldIndex == null || fieldIndex.equals(""))))
+					{
+						// 前后缀解析方式
+						addRuleTemplate(obj, StaticVar.ruleMap);
+					}
+					else
+					{
+						// 配置标签解析方式
+						addRuleTemplate(obj, StaticVar.relateMap);
+					}
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			parser.error("任务非空字段信息获取失败!");
+		}
+	}
+
+	public void addRuleTemplate(Object[] obj, HashMap<String, HashMap<String, List<RuleTemplate>>> map)
+	{
+		RuleTemplate parserTemplate = null;
+		List<RuleTemplate> oneTemplate = null;
+		HashMap<String, List<RuleTemplate>> oneGather = null;
+		if (obj == null)
+		{
+			return;
+		}
+		try
+		{
+			// String sql="SELECT ACQFIELD,RULEPREFIX,RULESUFFIX,EXCLUDREGEX,DATATABLE,TASKCODE,STRUCTUREDCODE,FIELDINDEX,TAGRULEID,EXTRACTREGEX FROM SPIDER_PARSE_RULE";
+
+			parserTemplate = new RuleTemplate();
+			// parserTemplate.setId(String.valueOf(obj[1] == null ? "": obj[1]));
+			parserTemplate.setFieldName(String.valueOf(obj[0] == null ? "" : obj[0]));
+			parserTemplate.setPrefix(String.valueOf(obj[1] == null ? "" : obj[1]));
+			parserTemplate.setSuffix(String.valueOf(obj[2] == null ? "" : obj[2]));
+			parserTemplate.setOutRegex(String.valueOf(obj[3] == null ? "" : obj[3]));
+			parserTemplate.setSavetable(String.valueOf(obj[4] == null ? "" : obj[4]));
+			String gatherId = String.valueOf(obj[5] == null ? "" : obj[5]);
+			String templateId = String.valueOf(obj[6] == null ? "" : obj[6]);
+			parserTemplate.setTaskCode(gatherId);
+			parserTemplate.setStructuredCode(templateId);
+			parserTemplate.setFieldIndex(String.valueOf(obj[7] == null ? "" : obj[7]));
+			parserTemplate.setTagRuleId(String.valueOf(obj[8] == null ? "" : obj[8]));
+			parserTemplate.setExtractregex(String.valueOf(obj[9] == null ? "" : obj[9]));
+			oneGather = map.get(gatherId);
+			if (oneGather == null)
+			{
+				oneGather = new HashMap<String, List<RuleTemplate>>();
+				oneTemplate = new ArrayList<RuleTemplate>();
+				oneTemplate.add(parserTemplate);
+				oneGather.put(templateId, oneTemplate);
+			}
+			else
+			{
+				oneTemplate = oneGather.get(templateId);
+				if (oneTemplate == null)
+				{
+					oneTemplate = new ArrayList<RuleTemplate>();
+					oneTemplate.add(parserTemplate);
+					oneGather.put(templateId, oneTemplate);
+				}
+				else
+				{
+					oneTemplate.add(parserTemplate);
+					oneGather.put(templateId, oneTemplate);
+				}
+			}
+			map.put(gatherId, oneGather);
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * 标签模板初始化
+	 * 
+	 * @param sql
+	 */
+	public void getTagTemplate(String sql)
+	{
+		getTag(sql, StaticVar.tagMap);
+		HashMap<String, TagruleTemplate> tagRule = null;
+		TagruleTemplate tagruleTemplate = null;// 存储一个模板
+		for (Map.Entry<String, HashMap<String, List<RuleTemplate>>> m : StaticVar.relateMap.entrySet())
+		{
+			String taskCode = m.getKey();
+			tagRule = StaticVar.tagruleMap.get(taskCode);
+			if (tagRule == null)
+			{
+				tagRule = new HashMap<String, TagruleTemplate>();
+			}
+			for (Map.Entry<String, List<RuleTemplate>> m1 : m.getValue().entrySet())
+			{
+				String structuredCode = m1.getKey();
+
+				String savetable = null;
+				// 获取field与index的对应关系
+				HashMap<Integer, String> relationMap = new HashMap<Integer, String>();
+				for (RuleTemplate ruleTemplate : m1.getValue())
+				{
+					savetable = ruleTemplate.getSavetable();
+					if (RegexValidate.StrNotNull(ruleTemplate.getFieldIndex()))
+						relationMap.put(Integer.parseInt(ruleTemplate.getFieldIndex()), ruleTemplate.getFieldName());
+				}
+				// 获取标签配置信息
+				if (null != StaticVar.tagMap.get(taskCode))
+				{
+					List<TagBean> tagList = StaticVar.tagMap.get(taskCode).get(structuredCode);
+					TagBean tagBean = null;
+					if (null != tagList && tagList.size() > 0)
+					{
+						for (TagBean t : tagList)
+						{
+							if (t.getParTagCode().equals("0"))
+							{
+								tagBean = template(tagList, t);
+							}
+						}
+					}
+
+					tagruleTemplate = new TagruleTemplate();
+					tagruleTemplate.setRelationMap(relationMap);
+					tagruleTemplate.setTagBean(tagBean);
+					tagruleTemplate.setSavetable(savetable);
+					// 存储到标签解析模板中
+					tagRule.put(structuredCode, tagruleTemplate);
+				}
+			}
+			StaticVar.tagruleMap.put(taskCode, tagRule);
+		}
+	}
+
+	/**
+	 * 获取数据库中所有标签配置信息
+	 * 
+	 * @param sql
+	 *            查询语句
+	 * @param map
+	 *            所有标签配置信息
+	 */
+	public void getTag(String sql, HashMap<String, HashMap<String, List<TagBean>>> map)
+	{
+		HashMap<String, List<TagBean>> oneGather = null;
+		List<TagBean> oneTemplate = null;
+		TagBean tagBean = null;
+		List<?> taglist = null;
+		try
+		{
+			sql = "SELECT TASKCODE,STRUCTUREDCODE,TAGCODE,PARTAGCODE,TAGNAME,TAGATTR,TAGATTRVAL,BINDEX,EINDEX,GLROWCELLNUM,TAGRULEID FROM SPIDER_PARSE_TAGRULE";
+			taglist = dao.selectSqlAuto(sql);
+			if (null != taglist && taglist.size() > 0)
+			{
+				for (int i = 0; i < taglist.size(); i++)
+				{
+					Object[] obj = (Object[]) taglist.get(i);
+					tagBean = new TagBean();
+					// 任务ID
+					String gatherId = String.valueOf(obj[0] == null ? "" : obj[0]);
+					// 结构ID
+					String templateId = String.valueOf(obj[1] == null ? "" : obj[1]);
+					// 标签编号
+					tagBean.setTagCode(String.valueOf(obj[2] == null ? "" : obj[2]));
+					// 父标签编号
+					tagBean.setParTagCode(String.valueOf(obj[3] == null ? "" : obj[3]));
+					// 标签名称
+					if (RegexValidate.StrNotNull(String.valueOf(obj[4] == null ? "" : obj[4])))
+					{
+						tagBean.setTagName(String.valueOf(obj[4] == null ? "" : obj[4]));
+					}
+					// 标签属性
+					// String tagattr = String.valueOf(obj[5] == null ? null: obj[5]);
+					// System.out.println("   aaa   "+ (String)obj[5]);
+					if (RegexValidate.StrNotNull((String) obj[5]))
+					{
+						tagBean.setTagAttr((String) obj[5]);
+					}
+					// 标签属性值
+					// String tagattrval = String.valueOf(obj[6] == null ? null: obj[6]);
+					if (RegexValidate.StrNotNull((String) obj[6]))
+					{
+						tagBean.setTagAttrVal((String) obj[6]);
+					}
+					// tagBean.setTagAttrVal((String)obj[6]);
+					String tagruleid = String.valueOf(obj[10] == null ? "" : obj[10]);
+					// 区分元搜索
+					if (!tagruleid.equals("4"))
+					{
+						// 开始下标
+						String bindex = String.valueOf(obj[7] == null ? "" : obj[7]);
+						if (bindex != null)
+						{
+							// tagBean.setBegIndex(Integer.parseInt(bindex));
+							tagBean.setBegindexs(bindex);
+						}
+						// 结束下标
+						String eindex = String.valueOf(obj[8] == null ? "" : obj[8]);
+						if (eindex != null)
+						{
+							// tagBean.setEndIndex(Integer.parseInt(eindex));
+							tagBean.setEndindexs(eindex);
+						}
+						// 过滤行数
+						String glcellrows = String.valueOf(obj[9] == null ? "" : obj[9]);
+						if (glcellrows != null)
+						{
+							tagBean.setGlcellrows(glcellrows);
+						}
+					}
+					oneGather = map.get(gatherId);
+					if (oneGather == null)
+					{
+						oneGather = new HashMap<String, List<TagBean>>();
+						oneTemplate = new ArrayList<TagBean>();
+						oneTemplate.add(tagBean);
+						oneGather.put(templateId, oneTemplate);
+					}
+					else
+					{
+						oneTemplate = oneGather.get(templateId);
+						if (oneTemplate == null)
+						{
+							oneTemplate = new ArrayList<TagBean>();
+							oneTemplate.add(tagBean);
+							oneGather.put(templateId, oneTemplate);
+						}
+						else
+						{
+							oneTemplate.add(tagBean);
+							oneGather.put(templateId, oneTemplate);
+						}
+					}
+					map.put(gatherId, oneGather);
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			parser.error("获取任务标签规则信息失败!");
+		}
+	}
+
+	/**
+	 * 递归生成一个标签模板
+	 * 
+	 * @param tagList
+	 *            标签配置模板list
+	 * @param tag
+	 *            根节点
+	 * @return
+	 */
+	public TagBean template(List<TagBean> tagList, TagBean tag)
+	{
+		String tagCode = tag.getTagCode();
+		int i = 0;
+		for (; i < tagList.size(); i++)
+		{
+			if (tagList.get(i).getParTagCode().equals(tagCode))
+			{
+				tag.setChildTag(template(tagList, tagList.get(i)));
+				return tag;
+			}
+		}
+		if (i == tagList.size())
+		{
+			return tag;
+		}
+		return tag;
+	}
+
+	public int savetosession(List<HashMap<String, String>> parserResult, String tableName, List<String> notNullField)
+	{
+		Session session = mySessionFactory.openSession();
+		Transaction tran = null;
+		int exnum = 0;
+		try
+		{
+			tran = session.beginTransaction();
+			tran.begin();
+
+			if (parserResult == null || tableName == null || tableName.equals(""))
+			{
+				return 0;
+			}
+			for (int i = 0; i < parserResult.size(); i++)
+			{
+				int t = saveparser(parserResult.get(i), tableName, notNullField, session);
+				if (t > 0)
+				{
+					exnum = t;
+				}
+				if (t == -1)
+				{
+					break;
+				}
+			}
+			parser.info("存储表" + tableName);
+			tran.commit();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			parser.info("存储" + tableName + "异常" + e.getMessage());
+			tran.rollback();
+			return -1;
+		}
+		finally
+		{
+			if (session != null)
+			{
+				session.close();
+			}
+		}
+		return exnum;
+	}
+
+	/**
+	 * ｅｘｃｅｌ解析数据存储
+	 * 
+	 * @param parserResult
+	 * @param tableName
+	 * @param notNullField
+	 * @param filedtypeMap
+	 * @return
+	 */
+	public int saveExcel(List<HashMap<String, String>> parserResult, String tableName, List<String> notNullField, HashMap<Object, String> filedtypeMap)
+	{
+		int exnum = 0;
+		try
+		{
+			if (parserResult == null || tableName == null || tableName.equals(""))
+			{
+				return 0;
+			}
+			int t = 0;
+			for (int i = 0; i < parserResult.size(); i++)
+			{
+				t = saveExcel(parserResult.get(i), tableName, notNullField, filedtypeMap);
+				if (t > 0)
+				{
+					exnum = t;
+				}
+				if (t == -1)
+				{
+					break;
+				}
+				t++;
+			}
+			excel.info("存储表" + tableName + "条数" + t);
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			excel.info("存储" + tableName + "异常" + e.getMessage());
+		}
+		return exnum;
+	}
+
+	/**
+	 * ｅｘｃｅｌ解析数据存储
+	 * 
+	 * @param parserResult
+	 * @param tableName
+	 * @param notNullField
+	 * @param filedtypeMap
+	 * @return
+	 */
+	public int saveExcel(HashMap<String, String> parserResult, String tableName, List<String> notNullField, HashMap<Object, String> filedtypeMap)
+			throws Exception
+	{
+		Session session = mySessionFactory.openSession();
+		Transaction tran = null;
+		int exnum = 0;
+		try
+		{
+			tran = session.beginTransaction();
+			tran.begin();
+			if (parserResult != null && parserResult.size() > 0)
+			{
+				exnum = saveparserExcel(parserResult, tableName, notNullField, filedtypeMap, session);
+			}
+			tran.commit();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			// parser.info("最终数据存储"+tableName+"异常"+e.getMessage());
+			tran.rollback();
+			exnum = -1;
+			throw e;
+		}
+		finally
+		{
+			if (session != null)
+			{
+				session.close();
+			}
+		}
+		return exnum;
+	}
+
+	public int saveparserExcel(HashMap<String, String> result, String tableName, List<String> notNullField, HashMap<Object, String> filedtypeMap,
+			Session session) throws Exception
+	{
+		int exnum = 0;
+		String insertSql = "insert into " + tableName + " ";
+		String selectSql = "select * from " + tableName + " ";
+		List list = null;
+		String field = "";
+		String value = "";
+		String conditions = "";
+		for (Map.Entry<String, String> m : result.entrySet())
+		{
+			// 处理ORACLE 特殊字符信息
+			String esvalue = RegexValidate.escapeStr(m.getValue());
+			if (filedtypeMap != null && filedtypeMap.size() > 0)
+			{
+				// 处理数据库字段类型
+				String dbfiledtype = filedtypeMap.get(m.getKey());
+				if (RegexValidate.StrNotNull(dbfiledtype))
+				{
+					if (RegexValidate.StrNotNull(esvalue))
+					{
+						field = field + m.getKey() + ",";
+						if (dbfiledtype.equals("NUMBER"))
+						{
+							value = value + "" + Integer.parseInt(esvalue) + ",";
+						}
+						else if (dbfiledtype.equals("DATE"))
+						{
+							value = value + "" + java.sql.Date.valueOf(esvalue) + ",";
+						}
+						else if (dbfiledtype.equals("LONG"))
+						{
+							value = value + "" + Long.parseLong(esvalue) + ",";
+						}
+						else
+						{
+							value = value + "'" + esvalue + "',";
+						}
+					}
+				}
+			}
+		}
+		if (field.endsWith(","))
+		{
+			field = field.substring(0, field.length() - 1);
+		}
+		if (value.endsWith(","))
+		{
+			value = value.substring(0, value.length() - 1);
+		}
+		// 增加
+		insertSql = insertSql + "(" + field + ") values (" + value + ")";
+		// //修改
+		// if (updateSql.endsWith(",")) {
+		// updateSql = updateSql.substring(0,updateSql.length()-1);
+		// }
+		// 设置非空字段
+		if (notNullField != null && notNullField.size() > 0)
+		{
+			for (String fieldName : notNullField)
+			{
+				if (result.get(fieldName) == null)
+				{
+					conditions = conditions + fieldName + " is null" + " and ";
+				}
+				else
+				{
+					conditions = conditions + fieldName + "='" + result.get(fieldName) + "' and ";
+				}
+			}
+			if (conditions.endsWith(" and "))
+			{
+				conditions = conditions.substring(0, conditions.length() - 5);
+			}
+			if (!conditions.equals(""))
+			{
+				selectSql = selectSql + "where " + conditions;
+				list = dao.selectSqlAuto(selectSql);
+			}
+			// 判断查询出的结果集合 数据库中是否存在
+			if (list == null || list.size() == 0)
+			{
+				excel.info("添加一条数据 " + insertSql);
+				exnum = dao.insertSql(session, insertSql);
+			}
+			else
+			{
+				excel.info("数据库检测存在该条数据 : " + selectSql);
+			}
+		}
+		else
+		{
+			excel.info("该解析模板尚未配置非空字段!");
+			return 0;
+		}
+		return exnum;
+	}
+//存入数据库
+	public int save(HashMap<String, String> parserResult, String tableName, List<String> notNullField) throws Exception
+	{
+		Session session = mySessionFactory.openSession();
+		Transaction tran = null;
+		int exnum = 0;
+		try
+		{
+			tran = session.beginTransaction();
+			tran.begin();
+			if (parserResult != null && parserResult.size() > 0)
+			{
+				exnum = saveparser(parserResult, tableName, notNullField, session);
+			}
+			tran.commit();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			parser.info("最终数据存储" + tableName + "异常" + e.getMessage());
+			tran.rollback();
+			exnum = -1;
+			throw e;
+		}
+		finally
+		{
+			if (session != null)
+			{
+				session.close();
+			}
+		}
+		return exnum;
+	}
+//执行sql语句存入数据库
+	public int saveparser(HashMap<String, String> result, String tableName, List<String> notNullField, Session session) throws Exception
+	{
+		int exnum = 0;
+		String insertSql = "insert into " + tableName + " ";
+		String selectSql = "select * from " + tableName + " ";
+		String updateSql = "update " + tableName + " set ";
+		List list = null;
+		String field = "";
+		String value = "";
+		String conditions = "";
+		for (Map.Entry<String, String> m : result.entrySet())
+		{
+			field = field + m.getKey() + ",";
+			// 处理ORACLE 特殊字符信息
+			String esvalue = RegexValidate.escapeStr(m.getValue());
+			value = value + "'" + esvalue + "',";
+			updateSql = updateSql + m.getKey() + "='" + esvalue + "',";
+		}
+		if (field.endsWith(","))
+		{
+			field = field.substring(0, field.length() - 1);
+		}
+		if (value.endsWith(","))
+		{
+			value = value.substring(0, value.length() - 1);
+		}
+		// 增加
+		// insertSql = insertSql + "(id," + field + ",spidertime) values ('"+WDWUtil.getSeqNextval()+"',"+ value +",sysdate)";
+		insertSql = insertSql + "(id," + field + ") values ('" + WDWUtil.getRandomSpiderTime() + "'," + value + ")";
+		// 修改
+		if (updateSql.endsWith(","))
+		{
+			updateSql = updateSql.substring(0, updateSql.length() - 1);
+		}
+		// 设置非空字段
+		if (notNullField != null && notNullField.size() > 0)
+		{
+			for (String fieldName : notNullField)
+			{
+				if (result.get(fieldName) == null)
+				{
+					conditions = conditions + fieldName + " is null" + " and ";
+				}
+				else
+				{
+					conditions = conditions + fieldName + "='" + result.get(fieldName) + "' and ";
+				}
+
+			}
+			if (conditions.endsWith(" and "))
+			{
+				conditions = conditions.substring(0, conditions.length() - 5);
+			}
+			if (!conditions.equals(""))
+			{
+				selectSql = selectSql + "where " + conditions;
+				// 查询
+				// parser.info("是否存在sql : " +selectSql);
+				try{
+				list = dao.selectSqlAuto(selectSql);
+				}catch(Exception e)
+				{
+					e.printStackTrace();
+				}
+			}
+			// 判断查询出的结果集合 数据库中是否存在
+			if (list == null || list.size() == 0)
+			{
+				insertSql = insertSql.replace("&nbsp;", " ");
+				parser.debug("添加一条数据 " + insertSql);
+				exnum = dao.insertSql(session, insertSql);
+			}
+			else
+			{
+				// updateSql = updateSql + ",updatetime=sysdate where " + conditions;
+				updateSql = updateSql + " where " + conditions;
+				parser.debug("数据库检测已存在该条数据 修改：" + updateSql);
+				exnum = dao.updateSql(session, updateSql);
+			}
+		}
+		else
+		{
+			parser.info("该模板尚未配置非空字段!");
+			return 0;
+		}
+		return exnum;
+	}
+
+	public int save(List<HashMap<String, String>> parserResult, String tableName, List<String> notNullField)
+	{
+		int exnum = 0;
+		try
+		{
+			if (parserResult == null || tableName == null || tableName.equals(""))
+			{
+				return 0;
+			}
+			int t = 0;
+			for (int i = 0; i < parserResult.size(); i++)
+			{
+				t = save(parserResult.get(i), tableName, notNullField);
+				if (t > 0)
+				{
+					exnum = t;
+				}
+				if (t == -1)
+				{
+					break;
+				}
+				t++;
+			}
+			parser.info("存储表 " + tableName + " 正常");
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			parser.info("存储" + tableName + "异常" + e.getMessage());
+		}
+		return exnum;
+	}
+
+	/**
+	 * 释放
+	 */
+	public void distory()
+	{
+		StaticVar.ruleMap.clear();
+		StaticVar.tagruleMap.clear();
+		StaticVar.relateMap.clear();
+		StaticVar.tagMap.clear();
+		StaticVar.notNullField.clear();
+		StaticVar.taskheavy.clear();
+	}
+	/****************************************** 解析任务操作类 *****************************************/
+
+}

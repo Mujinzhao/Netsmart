@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqlfile>
+    <!-- 生成sql文件 -->
+    <!--  网站解析配置 parser_task  -->
+    <sql key="getTaskList">
+		<![CDATA[
+		    select
+	            t.*,
+	            (select count(g.groupcode) from spider_taggroup g where g.taskcode= t.taskcode)
+                eventcount,
+                (select count(page.taskcode) from spider_pageinginfo page where page.taskcode= t.taskcode)
+                pagecount,
+                (select count(itag.taskcode) from Spider_Itertaginfo itag where itag.taskcode= t.taskcode)
+                itagcount,
+                (select count(distinct c.structuredid) from spider_parse_cusfield c where c.taskcode= t.taskcode)
+                 parsercount
+		     from 
+		         gather_parser_task t where #t.sitecode=:sitecode# 
+		         and #t.taskname like '%:taskname2%'#
+		         order by t.creatime asc
+		]]>
+	</sql>
+	<sql key="getGroup">
+		<![CDATA[
+		   select 
+	              g.*,
+	              (select count(s.gcode) from spider_eventinfo s where s.gcode=g.groupcode) as eventcount,
+	              (select count(page.taskcode) from spider_itertaginfo page where page.gcode = g.groupcode) pagecount
+	       from    spider_taggroup g 
+		   where   #g.taskcode=:taskcode#
+		   order by g.runsort asc
+		   
+		]]>
+	</sql>
+	<sql key="getSearchkeywords" describe="搜索引擎关键词管理">
+		<![CDATA[
+		    select s.*,t.taskname,
+		    (select count(page.taskcode) from spider_pageinginfo page where page.taskcode= t.taskcode) as pagecount
+		    from gather_parser_task t, search_engine_keywords s where s.taskcode = t.taskcode
+            and #s.taskcode=:taskcode#
+		]]>
+	</sql>
+	
+	<sql key="getEventConfig">
+		<![CDATA[
+		       select
+                s.*,g.groupdesc
+         from 
+                 SPIDER_EVENTINFO s, spider_taggroup g
+          where
+                 s.taskcode = g.taskcode
+            and  s.gcode =g.groupcode
+            and  #s.taskcode =:taskcode#
+            and  #s.gcode=:groupcode#
+            order by s.tagcode asc
+		]]>
+	</sql>
+	
+	<!-- 页面配置sql -->
+	<sql key="getPageconfg">
+		<![CDATA[
+            select * from spider_itertaginfo it where #it.taskcode=:taskcode# and #it.gcode=:groupcode#
+		]]>
+	</sql>
+	
+	<sql key="getPageingconfg">
+		<![CDATA[
+		     select * from spider_pageinginfo t where #t.taskcode=:taskcode# and #t.gcode=:groupcode#
+		]]>
+	</sql>
+	<!-- 分页配置sql -->
+	
+    <!--  任务执行时间配置 0 59 23 * * ? *-->
+	<sql key="timeday"  describe="每天凌晨23:59触发">
+		<![CDATA[
+		       0 59 23 * * ? *
+		]]>
+	</sql>
+	
+	<sql key="timeweek" describe="每天周六执行凌晨23:59触发">
+		<![CDATA[
+		     0 59 23 ? * SAT
+		]]>
+	</sql>
+	
+	<sql key="timemonth" describe="每月01号的23：59触发">
+		<![CDATA[
+		      0 59 23 01 * ?
+		]]>
+	</sql>
+</sqlfile>

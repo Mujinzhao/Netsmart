@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+
+<struts>
+    <!-- 将上传的临时文保存到D:/temp，而不是项目的WebAppRoot+/temp 下 -->
+	<constant name="struts.multipart.saveDir" value="/tmp" />
+	<constant name="struts.multipart.maxSize" value="1200000000" /> 
+	
+	<package name="parser" extends="json-default">
+		
+		<action name="templatepage" class="datacvg.excel.action.TemplateAction"  method="templatePage">
+		    <result name="success">/excelparser/excelmanage.jsp</result>
+		</action>
+		<!-- 文件上传  xiangyun.suo   文件管理  -->
+		<action name="filepage" class="datacvg.excel.action.FileMangerAction"  method="filePage">
+			<result name="success">/excelparser/excelist.jsp</result>
+		</action>
+		
+		<action name="templatestruct" class="datacvg.excel.action.TemplateAction"  method="templateStruct">
+			<result name="success">/excelparser/excelstrunct.jsp</result>
+		</action>
+		<action name="templateconfig" class="datacvg.excel.action.TemplateAction"  method="templateConfig">
+			<result name="excelconfig">/excelparser/excelconfig.jsp</result>
+		    <result name="excelfileds">/excelparser/excelfileds.jsp</result>
+			<result name="excelparser">/excelparser/excelparser.jsp</result>
+		</action>
+		<!-- <action name="excelemptyfiled" class="datacvg.excel.action.TemplateAction"  method="templatemptyPage">
+		
+		</action> -->
+		
+		
+		<action name="uploadfile" class="datacvg.excel.action.UploadAction" method="uploadFile">
+		</action>
+		
+		<action name="uploadFiles" class="datacvg.excel.action.FileMangerAction" method="uploadFiles">
+		</action>
+		
+		<action name="delFile" class="datacvg.excel.action.FileMangerAction"  method="delFile">
+		   <result name="success" type="json"></result>
+		</action>
+		
+		<action name="checkFileName" class="datacvg.excel.action.FileMangerAction"  method="checkFileName">
+		</action>
+		
+		<!-- 模板  -->
+		
+		<action name="uploadtemplate" class="datacvg.excel.action.TemplateAction"  method="uploadTemplate">
+		</action>
+	    <action name="deltemplate" class="datacvg.excel.action.TemplateAction"  method="delTemplate">
+		</action>
+		 <action name="modfiytemplate" class="datacvg.excel.action.TemplateAction"  method="modfiyTemplate">
+		</action>
+		 <action name="templatexml" class="datacvg.excel.action.TemplateAction"  method="createTemplateXml">
+		</action>
+		
+		
+		<action name="savestructure" class="datacvg.excel.action.TemplateAction"  method="saveTemplateStructure">
+		</action>
+		<action name="updatestructure" class="datacvg.excel.action.TemplateAction"  method="updateTemplateStructure">
+		</action>
+		<action name="delstructure" class="datacvg.excel.action.TemplateAction"  method="delTemplateStructure">
+		</action>
+		<action name="customfiledval" class="datacvg.excel.action.TemplateAction"  method="updatecustomFiledVal">
+		</action>
+		
+		<action name="checkexcelparser" class="datacvg.excel.action.TemplateAction"  method="checkexcelParser">
+		</action>
+		<action name="tanchong" class="datacvg.excel.action.TemplateAction"  method="tanchongStructure">
+		</action>
+		
+		<action name="savexcelparser" class="datacvg.excel.action.TemplateAction"  method="saveExcelParser">
+		</action>
+		<action name="updatexcelparser" class="datacvg.excel.action.TemplateAction"  method="updateExcelParser">
+		</action>
+		<action name="delexcelparser" class="datacvg.excel.action.TemplateAction"  method="delExcelParser">
+		</action>	
+		
+    </package>
+
+</struts>

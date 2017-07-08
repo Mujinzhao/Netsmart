@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+
+<struts>
+	<package name="plsql" extends="json-default">
+	   <action name="configpage" class="datacvg.dbconfg.action.DbConfigActrion"  method="configPage">
+	            <result name="success">/createtable/tablegroup.jsp</result>
+		</action>
+		<action name="generalpage" class="datacvg.dbconfg.action.DbConfigActrion"  method="generalPage">
+	            <result name="success">/createtable/general.jsp</result>
+		</action>
+		
+	    <action name="runsql" class="datacvg.dbconfg.action.DbConfigActrion"  method="dbConfigTable">
+		</action>
+    </package>
+</struts>

@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqlfile>
+	<sql key="getExcelTemplateList" ahthor="sxy" date="2015-3-31"
+		describe="excel解析模板集合">
+  	   <![CDATA[
+	         select   p.*,
+			          (select  count (s1.id)        from  excel_parser_structure s1 where s1.templateid=p.id) AS structernum,
+			          (select  count (p1.excelid) from  excel_file_list p1 where p1.templateid =p.id) AS filetotalnum,
+			          (select  count (p1.excelid) from  excel_file_list p1 where p1.templateid=p.id and p1.parserstatus='T') AS fileparsnum
+			from     excel_template_list p
+			where #p.template_name like '%:templatename%'# 
+			and   #p.template_type like '%:templatetype%'#
+			order by   p.create_time desc
+        ]]>
+	</sql>
+	<sql key="getExcelList" ahthor="sxy" date="2015-3-31"
+		describe="excel解析文件集合">
+  	   <![CDATA[
+	         select   p.*
+			from     excel_file_list p
+			where #p.templateid=:templateId#
+			and   #p.excel_name like '%:excelname%'# 
+			and   #p.excel_type like '%:exceltype%'#
+			order by p.create_time desc
+        ]]>
+	</sql>
+	
+	<sql key="getTemplateStruct" ahthor="sxy" date="2015-3-31"
+		describe="excel模板集合">
+  	   <![CDATA[
+	        select distinct t.templatecode,t.structcode,t.sheetname,t.sheetable,
+                   t.owner,t.asstable,t.asstablename,
+                   t.parsertype,t.celltorow,t.isactive
+            from excel_parser_cusfield t where #t.templatecode=:templateId# 
+        ]]>
+	</sql>
+	<sql key="getTemplateFiled" ahthor="sxy" date="2015-3-31"
+		describe="excel模板集合">
+  	   <![CDATA[
+	        select  t.*
+            from excel_parser_cusfield t
+            where #t.structcode=:structuredid# 
+            and   #t.asstable=:asstable#
+            and   #t.owner=:owner#
+            order by  to_number(t.filedindex)
+        ]]>
+	</sql>
+	
+	<sql key="getCustomFiled" ahthor="sxy" date="2015-3-31"
+		describe="excel模板集合">
+  	   <![CDATA[
+	        select   t.acqfield,t.acqfieldesc
+            from excel_parser_cusfield t where t.structcode=:structuredid 
+            and t.asstable=:asstable
+            and t.owner=:owner
+            order by  to_number(t.filedindex)
+        ]]>
+	</sql>
+	<sql key="updatemptyCustomAcqfield" ahthor="sxy" date="2012-09-04"
+		describe="修改非空字段信息">
+		<![CDATA[
+	       update  excel_parser_cusfield c 
+        ]]>
+	</sql>
+	<!--     c.emptyacqfield='1'  -->
+	<sql key="updateCustomFieldVar" ahthor="sxy" date="2012-09-04"
+		describe="指定非空指定值">
+		<![CDATA[
+	       update 
+	             excel_parser_cusfield c set c.acqfieldvalue=:acqfieldval
+	       where c.structcode=:structuredid 
+	       and c.acqfield=:acqfield
+        ]]>
+	</sql>
+	<sql key="updateCustomFieldIndex" ahthor="sxy" date="2012-09-04"
+		describe="指定非空指定下标">
+		<![CDATA[
+	       update 
+	             excel_parser_cusfield c set c.filedindex=:filedindex
+	       where c.structcode=:structuredid 
+	       and c.acqfield=:acqfield
+        ]]>
+	</sql>
+	<sql key="SaveTemplatePasers" ahthor="sxy" date="2015-3-31"
+		describe="添加excel模板集合">
+  	   <![CDATA[
+	       insert into excel_parser_cusfield values(:id,:templateId,:structuredid,:sheetname,
+	       :sheetable,:owner,:asstable,:asstablename,:acqfield,:acqfieldesc,:emptyacqfield,
+	       :parsertype,:celltorow,:isactive,sysdate,null,:acqfieldval,:filedindex)
+        ]]>
+	</sql>
+	
+	<sql key="UpdateTemplatePasers" ahthor="sxy" date="2015-3-31"
+		describe="修改excel模板集合">
+  	   <![CDATA[
+	         update  excel_parser_cusfield 
+	                 set
+	                     sheetname=:sheetname,
+	                     sheetable=:sheetable,
+	                     owner=:owner,
+	                     parsertype=:parsertype,
+	                     celltorow=:celltorow,
+	                     isactive=:isactive,
+	                     updatetime=sysdate
+              where       structcode=:structuredid
+        ]]>
+	</sql>
+	<sql key="delTemplateField" ahthor="sxy" date="2015-3-31"
+		describe="删除excel模板集合">
+  	   <![CDATA[
+	        delete from  excel_parser_cusfield c where c.asstable=:asstable and c.structcode=:structuredid
+        ]]>
+	</sql>
+	
+	<sql key="delTemplateRule" ahthor="sxy" date="2015-3-31"
+		describe="删除excel模板集合">
+  	   <![CDATA[
+	        delete from  excel_parser_structure c where c.templateid=:structuredid
+        ]]>
+	</sql>
+	
+	
+	
+	<sql key="excelPath" ahthor="sxy" date="2015-3-31"
+		describe="excel 解析文件上传存放目录">
+		<![CDATA[
+		    .\\EXCEL\\
+		]]>
+	</sql>
+	
+	<sql key="templatePath" ahthor="sxy" date="2015-3-31"
+		describe="excel 模板上传存放目录">
+		<![CDATA[
+		   .\\EXCEL\\TEPLATE\\
+		]]>
+	</sql>
+	<sql key="inserTemplate" ahthor="sxy" date="2015-3-31"
+		describe="模板信息入库">
+		<![CDATA[
+		       insert into 
+		                 excel_template_list
+		        values(
+				         :templateId,
+				         :templateType,
+				         :templateName,
+				         :templatefileType,
+				         :templateSize,
+				         :templatePath,
+				         '',
+				         '',
+				         '',
+				         '',
+				         :statusType,
+				         '',
+				         sysdate,
+				         '',
+				         sysdate,
+				         ''
+		       )
+		]]>
+	</sql>
+	
+	<sql key="getExcelStructure" ahthor="sxy" date="2015-3-31"
+		describe="excel 解析模板">
+		<![CDATA[
+	        select distinct t.sheetname,t.sheetable,t.parsertype,t.creatime,s.parsesrownum,s.parseerownum,s.id,
+	        s.parsescellnum,s.parseecellnum,s.parserowtocell from excel_parser_cusfield t,excel_parser_structure s
+			where s.templateid = t.templatecode
+			and s.structureid = t.structcode
+			and #s.templateid=:templateId#
+			and #s.structureid=:structuredid#
+			order by t.creatime desc
+	    ]]>
+	</sql>
+	<sql key="saveExcelParser" ahthor="sxy" date="2015-3-31"
+		describe="保存excel 解析模板">
+		<![CDATA[
+	        insert into 
+		                 excel_parser_structure
+		        values(
+				         :id,
+				         :templateId,
+				         :structuredid,
+				         :parsesrownum,
+				         :parseerownum,
+				         :parsescellnum,
+				         :parseecellnum,
+				         :parserowtocell,
+				         sysdate,
+				         '',
+				         ''
+		       )
+	    ]]>
+	</sql>
+	<sql key="updateExcelParser" ahthor="sxy" date="2015-3-31"
+		describe="修改excel 解析模板">
+		<![CDATA[
+	        update excel_parser_structure s 
+	        set    s.PARSESROWNUM=:parsesrownum,
+	               s.PARSEEROWNUM=:parseerownum,
+	               s.PARSESCELLNUM=:parsescellnum,
+	               s.PARSEECELLNUM=:parseecellnum,
+	               s.PARSEROWTOCELL=:parserowtocell,
+	               s.UPDATETIME=sysdate
+	         where s.structureid=:structuredid
+	           and s.id=:id
+	    ]]>
+	</sql>
+	<sql key="delExcelParser" ahthor="sxy" date="2015-3-31"
+		describe="删除excel 解析模板">
+		<![CDATA[
+	         delete from  excel_parser_structure s where s.id=:id
+	    ]]>
+	</sql>
+	
+	<sql key="getTemplateExcelFile" ahthor="sxy" date="2015-3-31"
+		describe="获取解析文件信息">
+		<![CDATA[
+	        	select t.templateid,t.excel_name,t.excel_path from excel_file_list t
+	    ]]>
+	</sql>
+	<sql key="getTemplateInfo" ahthor="sxy" date="2015-3-31"
+		describe="获取解析模板任务">
+		<![CDATA[
+	        	select l.id,l.template_type,l.template_path from excel_template_list l where l.status='T'
+	    ]]>
+	</sql>
+	<sql key="getExcelStruct" ahthor="sxy" date="2015-3-31"
+		describe="获取解析模板任务">
+		<![CDATA[
+	        	select distinct t.templatecode,t.structcode,t.sheetname,t.sheetable,
+                   t.owner,t.asstable,t.asstablename,t.creatime,
+                   t.parsertype,t.celltorow,t.isactive
+                from excel_parser_cusfield  t where t.isactive='T'
+	    ]]>
+	</sql>
+	<sql key="getFiledInfo" ahthor="sxy" date="2015-3-31"
+		describe="获取字段信息">
+		<![CDATA[
+	       select c.*,s.data_type from excel_parser_cusfield c ,dba_tab_columns s where c.isactive='T' and c.owner= s.owner and c.asstable =s.table_name and c.acqfield = s.column_name
+	    ]]>
+	</sql>
+	
+	<sql key="getExcelStructRule" ahthor="sxy" date="2015-3-31"
+		describe="模板规则获取">
+		<![CDATA[
+	        	 select t.* from excel_parser_structure t
+	    ]]>
+	</sql>
+</sqlfile>

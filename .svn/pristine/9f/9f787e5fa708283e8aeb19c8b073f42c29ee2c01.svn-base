@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset='utf-8'>
+  <title>Options - Handsontable</title>
+
+  <!--
+  Loading Handsontable (full distribution that includes all dependencies apart from jQuery)
+  -->
+  <script data-jsfiddle="common" src="../handsontable/lib/jquery.min.js"></script>
+
+  <link data-jsfiddle="common" rel="stylesheet" media="screen" href="../handsontable/dist/jquery.handsontable.full.css">
+  <script data-jsfiddle="common" src="../handsontable/dist/jquery.handsontable.full.js"></script>
+  <!-- the below is only needed for DateCell (uses jQuery UI Datepicker) -->
+
+  <link data-jsfiddle="common" rel="stylesheet" media="screen"
+        href="../handsontable/lib/jquery-ui/css/ui-bootstrap/jquery-ui.custom.css">
+  <script data-jsfiddle="common" src="../handsontable/lib/jquery-ui/js/jquery-ui.custom.min.js"></script>
+  <!--
+  Loading demo dependencies. They are used here only to enhance the examples on this page
+  -->
+  <link data-jsfiddle="common" rel="stylesheet" media="screen" href="../common/css/samples.css?20140331">
+  <script src="../common/js/samples.js"></script>
+  <script src="../common/js/highlight/highlight.pack.js"></script>
+  <link rel="stylesheet" media="screen" href="../common/js/highlight/styles/github.css">
+  <link rel="stylesheet" href="../common/css/font-awesome/css/font-awesome.min.css">
+  <script src="../common/js/ga.js"></script>
+  <script src="js/columnsfiled.js"></script>
+  <style>
+ .l-btn-text {
+	color: #444;
+	background: #fafafa;
+	background-repeat: repeat-x;
+	border: 1px solid #bbb;
+	background: -webkit-linear-gradient(top,#ffffff 0,#eeeeee 100%);
+	background: -moz-linear-gradient(top,#ffffff 0,#eeeeee 100%);
+	background: -o-linear-gradient(top,#ffffff 0,#eeeeee 100%);
+	background: linear-gradient(to bottom,#ffffff 0,#eeeeee 100%);
+	background-repeat: repeat-x;
+  }
+  
+  </style>
+</head>
+<!--  overflow: hidden; -->
+<body>
+     <div class="ht_clone_top handsontable" style="position: absolute; right: 0px; top: 0px; width: 418px; height: 60px;">
+      <div style="text-align:right">
+        <span id="addbottom" style="text-decoration:derline;cursor:default;" class="l-btn-text">十</span>
+      </div>
+      <br/>
+      <div style="text-align:right">
+        <span id="deletebutton" style="text-decoration:derline;cursor:default;" class="l-btn-text">一</span>
+      </div>
+     </div>
+     <div id="example1"></div>
+</body>
+</html>

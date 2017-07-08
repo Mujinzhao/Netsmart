@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+           http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context-2.5.xsd
+           http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
+           http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd"
+	default-lazy-init="false">
+	<!-- DAO -->
+	<bean id="mySessionFactory" class="core.dbcontrol.MySessionFactory">
+ 		<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+	
+	<bean id="dao" class="core.dbcontrol.BaseDao">
+ 		<property name="mySessionFactory" ref="mySessionFactory"></property>
+	</bean>
+	
+	 <!-- 网站解析 -->
+	 <bean id="websiteService" class="datacvg.website.service.WebsiteService">
+		  <property name="dao" ref="dao"></property>
+		  <property name="mySessionFactory" ref="mySessionFactory"></property>
+	 </bean>
+     <bean id="WebsiteAction" class="datacvg.website.action.WebsiteAction">
+		  <property name="websiteService" ref="websiteService"></property>
+	 </bean>
+	 
+	 <!--                                   解析任务 标签配置    Start                         -->
+	  <bean id="parsertaskService" class="datacvg.parse.service.ParserTaskService">
+		  <property name="dao" ref="dao"></property>
+		  <property name="mySessionFactory" ref="mySessionFactory"></property>
+	 </bean>
+	 
+	 <bean id="paseroptask" class="datacvg.parse.service.ParseroperateTask">
+		  <property name="dao" ref="dao"></property>
+		  <property name="mySessionFactory" ref="mySessionFactory"></property>
+	 </bean>
+     <bean id="ParserTaskAction" class="datacvg.parse.action.ParserTaskAction">
+		  <property name="parsertaskService" ref="parsertaskService"></property>
+		   <property name="paseroptask"       ref="paseroptask"></property>
+	 </bean>
+	 <bean id="TagParserFiledAction" class="datacvg.parse.action.TagParserFiledAction">
+		  <property name="parsertaskService" ref="parsertaskService"></property>
+	 </bean>
+	
+	 <bean id="ExtractAction" class="datacvg.parse.action.ExtractAction">
+	      <property name="parsertaskService" ref="parsertaskService"></property>
+		  <property name="paseroptask"       ref="paseroptask"></property>
+	 </bean>
+	 <!--                                   解析任务  标签配置    End                          -->
+	 
+</beans>

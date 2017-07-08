@@ -1,0 +1,1207 @@
+package core.dbcontrol;
+
+import java.io.Serializable;
+import java.sql.CallableStatement;
+import java.sql.Clob;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.hibernate.Query;
+import org.hibernate.SQLQuery;
+import org.hibernate.ScrollableResults;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+
+public class BaseDao extends AbstractDao{
+	
+	@Override
+	protected Session openSession() {
+		return getMySessionFactory().openSession();
+	}
+	
+
+
+	@Override       
+	public List<?> selectHqlAuto(String hql,Map<String,?> paramMap) throws Exception{
+			
+			List<?> list = null;
+			Session session = null;
+			try{
+				session = openSession();
+				Query query = session.createQuery(hql); 
+				
+				enterValuesToQuery(query,paramMap);
+				list = query.list();
+			}catch(Exception e){
+				e.printStackTrace();
+				throw e;
+			}finally{
+				closeSession(session);	
+			}
+			
+			return list;
+	}
+	@Override  
+	public List<?> selectHqlAutopage(String hql,Map<String,?> paramMap,int currentPage, int pageSize) throws Exception{
+		
+		List<?> list = null;
+		Session session = null;
+		try{
+			session = openSession();
+			Query query = session.createQuery(hql); 
+			query.setFirstResult((currentPage-1)*pageSize);
+			query.setMaxResults(pageSize);
+			enterValuesToQuery(query,paramMap);
+			 
+			list = query.list();
+		}catch(Exception e){
+			e.printStackTrace();
+			throw e;
+		}finally{
+			closeSession(session);	
+			
+		}
+		
+		return list;
+}
+	@Override
+	public List<?> selectHqlAuto(String hql) throws Exception{
+		Session session = null;
+		List<?> list = null;
+		
+		try{
+			session = openSession();
+			list =  session.createQuery(hql).list();
+		}catch(Exception e){
+			e.printStackTrace();
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+		
+		
+		return list;
+	}
+
+
+	@Override
+	public Integer updateHqlAuto(String hql, Map<String, ?> paramMap) throws Exception {
+		Session session =null;
+		Transaction  trans = null;
+		Integer i = 0;
+		try{
+			session = openSession();
+			trans = session.beginTransaction();
+			Query query  = session.createQuery(hql);
+			enterValuesToQuery(query,paramMap);
+			i = query.executeUpdate();
+			trans.commit();
+		}catch(Exception e){
+			e.printStackTrace();
+			if (trans != null) {
+				trans.rollback();
+			}
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+		
+		return i;
+		
+	}
+
+
+	@Override
+	public Integer updateHqlAuto(String hql) throws Exception {
+		Session session = null;
+		Transaction  trans = null;
+		Integer i = 0;
+		try{
+			session = openSession();
+			trans = session.beginTransaction();
+			i = session.createQuery(hql).executeUpdate();
+			trans.commit();
+		}catch(Exception e){
+			e.printStackTrace();
+			if (trans != null) {
+				trans.rollback();
+			}
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+		
+		return i;
+		
+	}
+	
+	
+	
+	@Override
+	public Integer updateHql(Session session ,String hql) throws Exception {
+		Integer i = 0;
+		 try {
+			i = session.createQuery(hql).executeUpdate();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}
+		return i;
+	}
+	
+	@Override
+	public Integer updateHql(Session session ,String hql,Map<String, ?> paramMap) throws Exception {
+		Integer i =0;
+		try {
+			Query query  = session.createQuery(hql);
+			enterValuesToQuery(query,paramMap);
+			i = query.executeUpdate();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;		
+		}
+		return i;
+	}
+	
+
+
+	@Override
+	public boolean  insertObjAuto(Object obj) throws Exception {
+		Session session = null;
+		Transaction  trans = null;
+		boolean b = false;
+		try{
+			session = openSession();
+			trans = session.beginTransaction();
+			Serializable seri = session.save(obj);
+			if(seri != null){
+				b = true;
+			}
+			trans.commit();
+		}catch(Exception e){
+			e.printStackTrace();
+			if (trans != null) {
+				trans.rollback();
+			}
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+		
+		return b;
+		
+	}
+
+
+	@Override
+	public void deleteObjAuto(Object obj) throws Exception {
+		Session session = null;
+		Transaction  trans = null;
+		try{
+			session = openSession();
+			trans = session.beginTransaction();
+			session.delete(obj);
+			trans.commit();
+		}catch(Exception e){
+			e.printStackTrace();
+			if (trans != null) {
+				trans.rollback();
+			}
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+		
+	}
+	
+	
+	@Override
+	public void updateObjAuto(Object obj) throws Exception {
+		Session session = null;
+		Transaction  trans = null;
+		try{
+			session = openSession();
+			trans = session.beginTransaction();
+			session.update(obj);
+			trans.commit();
+		}catch(Exception e){
+			e.printStackTrace();
+			if (trans != null) {
+				trans.rollback();
+			}
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+		
+	}
+
+
+
+	
+	
+
+
+	@Override
+	public void deleteObj(Session session, Object obj) throws Exception {
+		try {
+			session.delete(obj);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}
+	}
+
+
+	@Override
+	public Serializable insertObj(Session session, Object obj) throws Exception {
+		Serializable seri = null;
+		try {
+			seri = session.save(obj);
+			session.flush();
+			session.clear();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}
+		return seri;
+	}
+
+
+	@Override
+	public void updateObj(Session session, Object obj) throws Exception {
+		try {
+			session.update(obj);
+			//提交到数据库
+			session.flush();
+			//释放内存
+			session.clear();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}
+	}
+
+
+	@Override
+	public List<?> selectHqlPagingAuto(String hql, int currentPage, int pageSize) throws Exception {
+		List<?> list = null;
+		Session session = null;
+		try {
+			session = openSession();
+			Query query = session.createQuery(hql);
+			query.setFirstResult((currentPage-1)*pageSize);
+			query.setMaxResults(pageSize);
+			list = query.list();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+		return list;
+	}
+	
+	@Override
+	public List<?> selectSqlPagingAuto(String sql, int currentPage, int pageSize) throws Exception {
+		List<?> list = null;
+		Session session = null;
+		try {
+			session = openSession();
+			Query query = session.createSQLQuery(sql);
+			query.setFirstResult((currentPage-1)*pageSize);
+			query.setMaxResults(pageSize);
+			list = query.list();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+		return list;
+	}
+	
+	@Override
+	public List<?> selectSqlPagingAuto(String sql, Map<String, ?> paramMap, int currentPage, int pageSize) throws Exception {
+		List<?> list = null;
+		Session session = null;
+		try {
+			session = openSession();
+			Query query = session.createSQLQuery(sql);
+			enterValuesToQuery(query,paramMap);
+			query.setFirstResult((currentPage-1)*pageSize);
+			query.setMaxResults(pageSize);
+			list = query.list();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+		return list;
+	}
+	
+	@Override
+	public List<?> selectSqlPagingAuto(String sql, Map<String, ?> paramMap, int currentPage, int pageSize,Class clazz) throws Exception {
+		List<?> list = null;
+		Session session = null;
+		try {
+			session = openSession();
+			Query query = session.createSQLQuery(sql).addEntity(clazz);
+			enterValuesToQuery(query,paramMap);
+			query.setFirstResult((currentPage-1)*pageSize);
+			query.setMaxResults(pageSize);
+			list = query.list();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+		return list;
+	}
+	
+	
+	@Override
+	public List<?> selectHqlPagingAuto(String hql, Map<String, ?> paramMap, int currentPage, int pageSize) throws Exception {
+		List<?> list = null;
+		Session session = null;
+		try {
+			session = openSession();
+			Query query = session.createQuery(hql);
+			enterValuesToQuery(query,paramMap);
+			query.setFirstResult((currentPage-1)*pageSize);
+			query.setMaxResults(pageSize);
+			list = query.list();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+		return list;
+	}
+
+	@Override
+	public Integer deleteHql(Session session, String hql) throws Exception {
+		return updateHql(session,hql);
+	}
+
+	@Override
+	public Integer deleteHql(Session session, String hql,
+			Map<String, ?> paramMap) throws Exception {
+		return updateHql(session,hql,paramMap);
+	}
+
+	@Override
+	public Integer deleteHqlAuto(String hql) throws Exception {
+		return updateHqlAuto(hql);
+	}
+
+	@Override
+	public Integer deleteHqlAuto(String hql, Map<String, ?> paramMap) throws Exception {
+		return updateHqlAuto(hql,paramMap);
+	}
+
+	@Override
+	public List<?> selectSqlAuto(String sql) throws Exception {
+		Session session = null;
+		List<?> list = null;
+		try{
+			session = openSession();
+			Query q =  session.createSQLQuery(sql);
+			
+			list =  session.createSQLQuery(sql).list();
+		}catch(Exception e){
+			e.printStackTrace();
+			throw e;	
+		}finally{
+			closeSession(session);	
+		}
+		return list;
+	}
+	
+	@Deprecated
+//	public List<Row> selectDevelopSql(String sql) throws Exception {
+//		Session session = null;
+//		List<Row> listData = new ArrayList<Row>();
+//		try{
+//			session = openSession();
+//			Connection con = session.connection();
+//			PreparedStatement ps = con.prepareStatement(sql);
+//    	    ResultSet rs = ps.executeQuery();
+//    	    ResultSetMetaData rsmd = rs.getMetaData() ; 
+//    	    int columnCount = rsmd.getColumnCount();
+//    	    System.out.println("列数:"+columnCount);
+//    	   
+//    	    while(rs.next()){ 
+//    	    	Row row = new Row();
+//    	    	for(int i=1;i<columnCount+1;i++){
+//    	    		Object obj =rs.getObject(i);
+//        	    	if(obj!=null){
+//        	    		String type = StringUtil.getDataType(obj);
+//        	    		System.out.print("type:"+type);
+//        	    		if(type.equals("CLOB")){
+//        	    			Clob clob  = (Clob)obj;
+//           	    		 	String str = clob.getSubString(1, (int) clob.length());
+//           	    		    row.addCol(str);
+//        	    		}else{
+//        	    			String str = obj.toString();
+//        	    			row.addCol(str);
+//        	    		}
+//        	    	}else{
+//        	    		//当值为空时
+//        	    		row.addCol("");
+//        	    	}
+//    	    	}
+//    	    listData.add(row);
+//    	  }
+//
+//		}catch(Exception e){
+//			e.printStackTrace();
+//			throw e;	
+//		}finally{
+//			closeSession(session);	
+//		}
+//		return listData;
+//	}
+	
+	
+	 
+
+	@Override
+	public List<?> selectSqlAuto(String sql, Class<?> clazz) throws Exception {
+		Session session = null;
+		List<?> list = null;
+		try{
+			session = openSession();
+			list =  session.createSQLQuery(sql).addEntity(clazz).list();
+		}catch(Exception e){
+			e.printStackTrace();
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+		return list;
+	}
+
+	@Override
+	public Integer updateSql(Session session, String sql) throws Exception {
+		Integer i = 0;
+		try {
+			i = session.createSQLQuery(sql).executeUpdate();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		} 
+		return i;
+	}
+
+	@Override
+	public Integer updateSqlAuto(String sql) throws Exception {
+		Session session = null;
+		Transaction  trans = null;
+		Integer i = 0;
+		try{
+			session = openSession();
+			trans = session.beginTransaction();
+			i = session.createSQLQuery(sql).executeUpdate();
+			trans.commit();
+		}catch(Exception e){
+			e.printStackTrace();
+			if (trans != null) {
+				trans.rollback();
+			}
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+		
+		return i;
+	}
+
+	@Override
+	public Integer deleteSql(Session session, String sql) throws Exception {
+		return updateSql(session, sql);
+	}
+
+	@Override
+	public Integer deleteSqlAuto(String sql) throws Exception {
+		return updateSqlAuto(sql);
+	}
+
+	@Override
+	public Integer insertSql(Session session, String sql) throws Exception {
+		return updateSql(session, sql);
+	}
+
+	@Override
+	public Integer insertSqlAuto(String sql) throws Exception {
+		return updateSqlAuto(sql);
+	}
+
+	@Override
+	public List<?> selectSql(Session session, String sql) throws Exception {
+		List<?> list = null;
+		try{
+			list =  session.createSQLQuery(sql).list();
+		}catch(Exception e){
+			e.printStackTrace();
+			throw e;
+		}
+		
+		
+		return list;
+	}
+
+	@Override
+	public List<?> selectSql(Session session, String sql, Class<?> clazz) throws Exception {
+		List<?> list = null;
+		try{
+			list =  session.createSQLQuery(sql).addEntity(clazz).list();
+		}catch(Exception e){
+			e.printStackTrace();
+			throw e;
+		}
+		
+		
+		return list;
+	}
+
+
+	@Override
+	public List<?> selectHql(Session session, String hql) throws Exception {
+		List<?> list = null;
+		try{
+			list =  session.createQuery(hql).list();
+		}catch(Exception e){
+			e.printStackTrace();
+			throw e;
+		}
+		
+		
+		return list;
+	}
+
+
+	@Override
+	public List<?> selectHql(Session session, String hql,
+			Map<String, ?> paramMap) throws Exception {
+		List<?> list = null;
+		try{
+			Query query = session.createQuery(hql); 			
+			enterValuesToQuery(query,paramMap);
+			list = query.list();
+		}catch(Exception e){
+			e.printStackTrace();
+			throw e;
+		}
+		
+		return list;
+	}
+
+
+	@Override
+	public List<?> selectSql(Session session, String sql,
+			Map<String, ?> paramMap) throws Exception {
+		List<?> list = null;
+		try{
+			Query query = session.createSQLQuery(sql); 			
+			enterValuesToQuery(query,paramMap);
+			list = query.list();
+		}catch(Exception e){
+			e.printStackTrace();
+			throw e;
+		}
+		
+		return list;
+	}
+
+
+	@Override
+	public List<?> selectSql(Session session, String sql,
+			Map<String, ?> paramMap, Class<?> clazz) throws Exception {
+		List<?> list = null;
+		try{
+			Query query = session.createSQLQuery(sql).addEntity(clazz); 			
+			enterValuesToQuery(query,paramMap);
+			list = query.list();
+		}catch(Exception e){
+			throw e;
+		}
+		
+		return list;
+	}
+
+//执行sql语句
+	@Override
+	public List<?> selectSqlAuto(String sql, Map<String, ?> paramMap) throws Exception {
+		Session session = null;
+		List<?> list = null;
+		try{
+			session = openSession();
+			Query query = session.createSQLQuery(sql);
+			enterValuesToQuery(query,paramMap);
+			
+			list = query.list();
+		}catch(Exception e){
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+		return list;
+	}
+
+
+	@Override
+	public List<?> selectSqlAuto(String sql, Map<String, ?> paramMap,
+			Class<?> clazz) throws Exception {
+		Session session = null;
+		List<?> list = null;
+		try{
+			session = openSession();
+			Query query = session.createSQLQuery(sql).addEntity(clazz);
+			enterValuesToQuery(query,paramMap);
+			list = query.list();
+		}catch(Exception e){
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+		return list;
+	}
+
+
+
+
+
+	@Override
+	protected void closeSession(Session session) throws Exception {
+		try {
+			if(session != null){
+				session.clear();
+				session.close();
+			}
+		} catch (Exception e) {
+			throw e;
+		} 
+		
+	}
+
+
+	@Override
+	public List<?> execDBJDBCFunction(Session session,String parent_id,String user_id) throws Exception{
+		return null;
+//		List<?> list = null;
+//		try {
+//			Connection conn = session.connection();
+//			CallableStatement call = conn.prepareCall("{?=call resTreeResaultSet(?)}");
+//			call.registerOutParameter(1, OracleTypes.CURSOR);
+//			call.setString(2, parent_id);
+//			call.executeQuery();   
+//			ResultSet rset = (ResultSet)call.getObject(1);
+//			list = getResultSetToList(rset);
+//		} catch (SQLException e) {
+//			e.printStackTrace();
+//			throw e;
+//		}
+//
+//		return list;
+	}
+	/**
+	 * 不同数据库下，hibernate无法实现，调用本方法实现数据库实现正常取数！
+	 * @return List<?>
+	 * @throws Exception
+	 * @author Administrator
+	 */
+	@Override
+	public List<?> execDBJDBCFunctionAuto(String parent_id,String user_id) throws Exception{
+		Session session = null;
+		List<?> list = null;
+		try {
+			session = openSession();
+			Connection conn = session.connection();
+			CallableStatement call = conn.prepareCall("{?=call resTreeResaultSet(?,?)}");
+//			call.registerOutParameter(1, OracleTypes.CURSOR);
+			call.setString(2, parent_id);
+			call.setString(3, user_id);
+			call.executeQuery();   
+			ResultSet rset = (ResultSet)call.getObject(1);
+			list = getResultSetToList(rset);
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+
+		return list;
+	}
+	/**
+	 * 
+	 * 特殊情况下执行函数返回ResultSet结果集，转化成List对象结果集。
+	 * @author solo
+	 * @param rset
+	 * @return
+	 * @throws SQLException 
+	 */
+	public List<?> getResultSetToList(ResultSet rset) throws SQLException{
+		return null; 
+//		List<BiSysResource> bisysrList = new ArrayList<BiSysResource>();
+//		BiSysResource biSysResource = null;
+//		try {
+//			while (rset.next()) {
+//				biSysResource = new BiSysResource();
+//				biSysResource.setResPkid(rset.getString(1));
+//				biSysResource.setResId(rset.getString(2));
+//				biSysResource.setResClname(rset.getString(3));
+//				biSysResource.setResParentid(rset.getString(4));
+//				bisysrList.add(biSysResource);
+//			}
+//		} catch (SQLException e) {
+//			e.printStackTrace();
+//			throw e;
+//		}
+//		return bisysrList;
+	}
+	
+	@Override
+	public List<?> execHqlFunction(){
+		
+		Session session = this.openSession();
+		Iterator<?> iteratorList = null;
+		try{
+			 SQLQuery query=session.createSQLQuery("{?=call resTreeResaultSet()}");
+//			 query.setEntity(0, BiSysResource.class);
+			 query.list();   
+			 ScrollableResults sr=query.scroll();   
+			 int num=sr.getRowNumber();   
+			 for(int index=0;index<num;index++){   
+//				 BiSysResource stu=(BiSysResource)sr.get(index);   
+//				 stu.getResId();   
+			 }
+
+		}catch(Exception e){
+			e.printStackTrace();
+			
+		}
+		
+		return null;
+	}
+
+
+
+	@Override
+	public List<?> selectHqlPaging(Session session, String hql,
+			int currentPage, int pageSize) throws Exception {
+		List<?> list = null;
+		try {
+			Query query = session.createQuery(hql);
+			query.setFirstResult((currentPage-1)*pageSize);
+			query.setMaxResults(pageSize);
+			list = query.list();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+		return list;
+	}
+
+
+
+	@Override
+	public List<?> selectHqlPaging(Session session, String hql,
+			Map<String, ?> paramMap, int currentPage, int pageSize)
+			throws Exception {
+		List<?> list = null;
+		try {
+			Query query = session.createQuery(hql);
+			enterValuesToQuery(query,paramMap);
+			query.setFirstResult((currentPage-1)*pageSize);
+			query.setMaxResults(pageSize);
+			list = query.list();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+		return list;
+	}
+
+
+
+	@Override
+	public Integer selectHqlCount(Session session, String hql) throws Exception {
+		Integer count = 0;
+		try{
+			Query query = session.createQuery(hql);
+			Object obj = query.uniqueResult();
+			if(obj!=null)
+				count  =  Integer.parseInt(obj.toString());
+		}catch(Exception e){
+			e.printStackTrace();
+			throw e;
+		}
+		return count;
+	}
+
+
+
+	@Override
+	public Integer selectHqlCount(Session session, String hql,
+			Map<String, ?> paramMap) throws Exception {
+		Integer count = 0;
+		try{
+			Query query = session.createQuery(hql); 			
+			enterValuesToQuery(query,paramMap);
+			Object obj = query.uniqueResult();
+			if(obj!=null)
+				count  =  Integer.parseInt(obj.toString());
+		}catch(Exception e){
+			e.printStackTrace();
+			throw e;
+		}
+		return count;
+	}
+
+
+
+	@Override
+	public Integer selectHqlCountAuto(String hql) throws Exception {
+		Session session = null;
+		Integer count = 0;
+		try{
+			session = openSession();
+			Query query  = session.createQuery(hql);
+			Object obj = query.uniqueResult();
+			if(obj!=null)
+				count  =  Integer.parseInt(obj.toString());
+		}catch(Exception e){
+			e.printStackTrace();
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+		
+		
+		return count;
+	}
+
+	@Override
+	public Integer selectHqlCountAuto(String hql, Map<String, ?> paramMap)
+			throws Exception {
+		Session session = null;
+		Integer count = 0;
+		try{
+			session = openSession();
+			Query query = session.createQuery(hql); 			
+			enterValuesToQuery(query,paramMap);
+			Object obj = query.uniqueResult();
+			if(obj!=null)
+				count  =  Integer.parseInt(obj.toString());
+		}catch(Exception e){
+			e.printStackTrace();
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+		
+		return count;
+	}
+
+
+    public  List<Map<String, Object>> queryMapList(String sql) throws Exception {
+    	Session session = null;
+    	List<Map<String, Object>> lists = new ArrayList<Map<String, Object>>();
+		Statement preStmt = null;
+		ResultSet rs = null;
+		SimpleDateFormat dd = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		try {
+			session = openSession();
+		    preStmt = session.connection().createStatement();
+		    rs = preStmt.executeQuery(sql);
+		    ResultSetMetaData rsmd = rs.getMetaData();
+		    int columnCount = rsmd.getColumnCount();
+		    while (null != rs && rs.next()) {
+		            Map<String, Object> map = new HashMap<String, Object>();
+		            for (int i = 0; i < columnCount; i++) {
+		                    String name = rsmd.getColumnName(i + 1);
+		                    Object value = rs.getObject(name);
+		                  if(value instanceof java.sql.Date){
+		                	  value = dd.format(rs.getTimestamp(name));
+		                     //System.out.println(value.toString());
+		                  } 
+		                 value=value!=null?value.toString().trim():value;
+		                 map.put(name.toLowerCase(), value);
+		                  
+		            }
+		            lists.add(map);
+		    }
+		} finally {
+			
+		    if (null != rs)
+		            rs.close();
+		    if (null != preStmt)
+		            preStmt.close();
+		    closeSession(session);	
+		}
+		return lists;
+	}
+    
+    
+    public  List<Map<String, Object>> queryMapList(String sql,Map<String, ?> paramMap) throws Exception {
+    	Session session = null;
+    	List<Map<String, Object>> lists = new ArrayList<Map<String, Object>>();
+		PreparedStatement  preStmt = null;
+		ResultSet rs = null;
+		SimpleDateFormat dd = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		try {
+			session = openSession();
+			preStmt = changeSqlparamObj(session,sql,paramMap);
+		    rs = preStmt.executeQuery();
+		    ResultSetMetaData rsmd = rs.getMetaData();
+		    int columnCount = rsmd.getColumnCount();
+		    while (null != rs && rs.next()) {
+		            Map<String, Object> map = new HashMap<String, Object>();
+		            for (int i = 0; i < columnCount; i++) {
+		                    String name = rsmd.getColumnName(i + 1);
+		                    Object value = rs.getObject(name);
+		                  if(value instanceof java.sql.Date){
+		                	  value = dd.format(rs.getTimestamp(name));
+		                     //System.out.println(value.toString());
+		                  } 
+		                 value=value!=null?value.toString().trim():value;
+		                 map.put(name.toLowerCase()	, value);
+		                  
+		            }
+		            lists.add(map);
+		    }
+		} finally {
+			
+		    if (null != rs)
+		            rs.close();
+		    if (null != preStmt)
+		            preStmt.close();
+		    closeSession(session);	
+		}
+		return lists;
+	}
+    public  List<Map<String, Object>> queryMapList(String sql,Map<String, ?> paramMap
+    		,int currentPage,int pageSize,String[] queryname) throws Exception {
+    	
+    	Session session = null;
+    	List<Map<String, Object>> lists = new ArrayList<Map<String, Object>>();
+    	try{
+    		SimpleDateFormat dd = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	    	session = openSession();
+			Query query = session.createSQLQuery(sql);
+			// 报销中条数
+			List listtotal = selectSqlAuto(sql, paramMap);
+//			(sql, paramMap);
+			
+			enterValuesToQuery(query,paramMap);
+			query.setFirstResult((currentPage-1)*pageSize);
+			query.setMaxResults(pageSize);
+			List list = query.list();
+			if (null != list && list.size()>0) {
+				  for (int i = 0; i < list.size(); i++) {
+					    Map<String, Object> map = new HashMap<String, Object>();
+						Object[] obj = (Object[])list.get(i);
+						for(int j = 0; j < queryname.length; j++){
+							  String name = queryname[j];
+			                  Object value = obj[j];
+			                  if(value instanceof java.sql.Date){
+			                	  value = dd.format(obj[0]);
+			                  } 
+			                 value=value!=null?value.toString().trim():value;
+//			                 System.out.println(name+"---------->"+value);
+			                 map.put(name.toLowerCase()	, value);
+						}
+						map.put("totalbx",listtotal.size());
+						
+						lists.add(map);
+				  }
+			}
+    	}catch (Exception e) {
+			// TODO: handle exception
+    		e.printStackTrace();
+		} finally {
+		    closeSession(session);	
+		}
+		return lists;
+    	
+    }
+	@Override
+	public Object selectSqlObjAuto(String hql) throws Exception {
+		Session session = null;
+		Object countobj = null;
+		try{
+			session = openSession();
+			Query query  = session.createSQLQuery(hql);
+			Object obj = query.uniqueResult();
+			if(obj!=null)
+				countobj  =  obj;
+		}catch(Exception e){
+			e.printStackTrace();
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+		
+		
+		return countobj;
+	}
+
+	@Override
+	public Object selectSqlObjAuto(String hql,Map<String, ?> paramMap) throws Exception {
+		Session session = null;
+		Object countobj = null;
+		try{
+			session = openSession();
+			Query query  = session.createSQLQuery(hql);
+			enterValuesToQuery(query,paramMap);
+			Object obj = query.uniqueResult();
+			if(obj!=null)
+				countobj  =  obj;
+		}catch(Exception e){
+			e.printStackTrace();
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+		return countobj;
+	}
+
+	@Override
+	public Object selectHqlObjAuto(String hql, Map<String, ?> paramMap)
+			throws Exception {
+		// TODO Auto-generated method stub
+		  Object objtype = null;
+			Session session = null;
+			try{
+				session = openSession();
+				Query query  = session.createSQLQuery(hql);
+				enterValuesToQuery(query,paramMap);
+				Object obj = query.uniqueResult();
+				if(obj!=null)
+					objtype= obj;
+			}catch(Exception e){
+				e.printStackTrace();
+				throw e;
+			}finally{
+				closeSession(session);	
+			}
+			
+			return objtype;
+	}
+	@Override
+	public Object selectHqlObjAuto(String hql)
+			throws Exception {
+		// TODO Auto-generated method stub
+		  Object objtype = null;
+			Session session = null;
+			try{
+				session = openSession();
+				
+				Query query  = session.createSQLQuery(hql);
+				Object obj = query.uniqueResult();
+				if(obj!=null)
+					objtype= obj;
+			}catch(Exception e){
+				e.printStackTrace();
+				throw e;
+			}finally{
+				closeSession(session);	
+			}
+			
+			return objtype;
+	}
+
+
+
+	@Override
+	public Integer exeSql(String sql, Map<String, ?> paramMap) throws Exception {
+		
+		Session session = null;
+		PreparedStatement  preStmt = null;
+//		Transaction  trans = null;
+		Integer i = 0;
+		
+		try{
+			session = openSession();
+//			trans = session.beginTransaction();
+//			trans.begin();
+//			Query query=session.createSQLQuery(sql);
+			if(paramMap!=null)
+				preStmt = changeSqlparamObj(session,sql,paramMap);
+			
+			i = preStmt.executeUpdate();
+//			trans.commit();
+//			i = query.executeUpdate();
+		}catch(Exception e){
+			e.printStackTrace();
+//			trans.rollback();
+			throw e;
+		}finally{
+			closeSession(session);	
+		}
+		
+		return i;// TODO Auto-generated method stub
+		 
+	}
+
+	@Override
+	public Integer exeSql(Session session,String sql, Map<String, ?> paramMap) throws Exception {
+		
+		Integer i = 0;
+		try{
+			Query query=session.createSQLQuery(sql);
+			if(paramMap!=null)
+				enterValuesToQuery(query,paramMap);
+			
+			i = query.executeUpdate();
+		}catch(Exception e){
+			e.printStackTrace();
+			throw e;
+		}
+		return i;// TODO Auto-generated method stub
+		 
+	}
+
+	public Integer exeSqlQuery(String sql)throws Exception {
+		
+		return exeSqlQuery(sql,null);
+	}
+
+	public Integer exeSqlQuery(String sql, Map<String, ?> paramMap)
+			throws Exception {
+		Integer i = 0;
+	 	Session session = null;
+	 	PreparedStatement  preStmt = null;
+		try {
+			session = openSession();
+			preStmt = changeSqlparam(session,sql,paramMap);
+			i= preStmt.executeUpdate();
+		}
+		catch (Exception e) {
+			// TODO: handle exception
+			e.fillInStackTrace();
+			i=-1;
+			throw e;
+		}
+		return i;
+	}
+}

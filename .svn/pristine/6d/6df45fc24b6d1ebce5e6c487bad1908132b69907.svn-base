@@ -1,0 +1,16 @@
+#oracle.driverClass=oracle.jdbc.driver.OracleDriver
+#oracle.type=oracle
+#oracle.url=jdbc:oracle:thin:@localhost:1521:XE
+#oracle.user=datacvg
+#oracle.password=datacvg
+
+oracle.driverClass=oracle.jdbc.driver.OracleDriver
+oracle.type=oracle
+oracle.url=jdbc:oracle:thin:@192.168.2.180:1521:orcl
+oracle.user=netsmarttemplate
+oracle.password=template123
+webdriver.ie.driver =C\:/Users/Administrator/Workspaces/MyEclipse 10/IEDriverServer.exe
+webdriver.chrome.driver =C\:/Users/Administrator/Workspaces/MyEclipse 10/chromedriver.exe
+#username & password on http://v3.dama2.com/
+verificate.username=talonlei
+verificate.password=datacvg123

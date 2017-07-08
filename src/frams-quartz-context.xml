@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+           http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context-2.5.xsd
+           http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
+           http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd"
+	default-lazy-init="false">
+	
+	<!-- DAO -->
+	<bean id="mySessionFactory" class="core.dbcontrol.MySessionFactory">
+ 		<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+	
+	<bean id="dao" class="core.dbcontrol.BaseDao">
+ 		<property name="mySessionFactory" ref="mySessionFactory"></property>
+	</bean>
+	
+	<bean id="taskmanageService" class="datacvg.taskmanage.service.TaskManageService">
+		<property name="dao" ref="dao"></property>
+		<property name="mySessionFactory" ref="mySessionFactory"></property>
+	</bean>
+	
+	<bean id="TimingSendTimer" class="datacvg.taskmanage.action.TimingSendTimer">
+	    <property name="taskmanageService" ref="taskmanageService"/>  
+	</bean>
+	
+	<bean id="InitJobDetail"
+		class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject">
+			<ref bean="TimingSendTimer" />
+		</property>
+		<property name="targetMethod">
+			<value>initJobTrigger</value>
+		</property>
+		<property name="concurrent" value="false" />
+	</bean>
+	
+	<bean id="InitTrigger" class="org.springframework.scheduling.quartz.CronTriggerBean">
+		<property name="jobDetail">
+			<ref bean="InitJobDetail" />
+		</property>
+		<property name="cronExpression">
+			<value>* * * * * ?</value>
+		</property>
+	</bean>
+	<bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<property name="triggers">
+			<list>
+				<ref local="InitTrigger" />
+			</list>
+		</property>
+	</bean>
+</beans>
